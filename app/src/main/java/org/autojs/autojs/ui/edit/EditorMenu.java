@@ -98,9 +98,6 @@ public class EditorMenu {
         if (itemId == R.id.action_log) {
             return ConsoleUtils.launch(mContext);
         }
-        if (itemId == R.id.action_show_log) {
-            return tryDoing(mEditorView::showLogPanel);
-        }
         if (itemId == R.id.action_force_stop) {
             return tryDoing(mEditorView::forceStop);
         }
@@ -162,10 +159,6 @@ public class EditorMenu {
         int itemId = item.getItemId();
         if (itemId == R.id.action_console) {
             return tryDoing(mEditorView::showConsole);
-        }
-        if (itemId == R.id.action_show_log) {
-            showLogPanel();
-            return true;
         }
         if (itemId == R.id.action_import_java_class) {
             importJavaPackageOrClass();
@@ -404,10 +397,6 @@ public class EditorMenu {
         builder.negativeColorRes(R.color.dialog_button_default);
         DialogUtils.widgetThemeColor(builder);
         builder.show();
-    }
-
-    private void showLogPanel() {
-        mEditorView.showLogPanel();
     }
 
     private void showFileDetails() {
