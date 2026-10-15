@@ -233,6 +233,19 @@
                 android:resource="@xml/app_shortcuts" />
         </activity>
 
+        <!-- AutoDroid Runner 平台客户端入口（唯一桌面图标） -->
+        <activity
+            android:name="org.autojs.autodroid.ui.MainActivity"
+            android:exported="true"
+            android:label="AutoDroid Runner"
+            android:theme="@style/AppTheme">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity-alias
             android:name="org.autojs.autojs.launcher.AdaptiveIconAlias"
             android:enabled="true"

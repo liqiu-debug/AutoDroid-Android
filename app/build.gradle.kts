@@ -28,6 +28,10 @@ idea {
 
 val globalApplicationId = "org.autojs.autojs6"
 
+// AutoDroid Runner：独立 applicationId，可与官方 AutoJs6 共存安装；
+// namespace 保持 org.autojs.autojs6 不变（最小 diff，代码零改动）。
+val runnerApplicationId = "com.autodroid.runner"
+
 val flavorDimension = "channel"
 val flavorNameApp = "app"
 val flavorNameInrt = "inrt"
@@ -460,7 +464,7 @@ android {
     compileSdk = versions.sdkVersionCompile
 
     defaultConfig {
-        applicationId = applicationId
+        applicationId = runnerApplicationId
 
         minSdk = versions.sdkVersionMin
         targetSdk = versions.sdkVersionTarget
@@ -500,7 +504,9 @@ android {
                 mapOf(
                     "CHANNEL" to flavorNameApp,
                     "appName" to "@string/app_name",
-                    "intentCategory" to "android.intent.category.LAUNCHER",
+                    // AutoDroid Runner：主入口改为 org.autojs.autodroid.ui.MainActivity，
+                    // 原 AutoJs6 启动别名不再作为桌面图标（应用内保留控制台入口）。
+                    "intentCategory" to "android.intent.category.DEFAULT",
                     "intentCategoryInrt" to "android.intent.category.DEFAULT",
                     "authorities" to "org.autojs.autojs6.fileprovider",
                     "icon" to "@mipmap/ic_app_launcher_adaptive",

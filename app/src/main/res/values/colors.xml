@@ -55,6 +55,9 @@
 
     <color name="console_view_verbose">#BDBDBD</color>
     <color name="console_view_debug">#111214</color>
+    <!-- 底部日志面板 (bottom_sheet_log) 使用；上游 49ea44ec 遗漏定义，此处补齐 -->
+    <color name="console_verbose">#BDBDBD</color>
+    <color name="console_debug">#111214</color>
     <color name="console_view_info">#43A047</color>
     <color name="console_view_warn">#1976D2</color>
     <color name="console_view_error">#C62828</color>
