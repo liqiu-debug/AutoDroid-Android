@@ -39,7 +39,7 @@ class ReportDetailActivity : AppCompatActivity() {
             return
         }
         statusText.text = "加载报告中…"
-        AutoDroidApi.service(Session.serverUrl) { Session.token }
+        AutoDroidApi.service(Session.serverUrl)
             .downloadReport(executionId)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {

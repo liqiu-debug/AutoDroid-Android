@@ -2,54 +2,78 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@color/ad_bg"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/text_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#1F2329"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:background="@drawable/ad_bg_header"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-    <Switch
-        android:id="@+id/switch_notify"
+        <TextView
+            android:id="@+id/text_title"
+            style="@style/AdHeaderTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="运行" />
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/AdCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="执行后发送飞书通知" />
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btn_run"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="重新运行" />
+        <TextView
+            android:id="@+id/text_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ad_text"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/text_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:textColor="#1F2329"
-        android:textSize="14sp" />
+        <Switch
+            android:id="@+id/switch_notify"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="执行后发送飞书通知"
+            android:textColor="@color/ad_text_secondary"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_run"
+            style="@style/AdButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="重新运行" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/list_steps"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:layout_weight="1"
-        android:divider="#E5E6EB"
-        android:dividerHeight="0.5dp" />
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:scrollbars="none" />
 
     <TextView
         android:id="@+id/text_result"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#646A73"
+        android:padding="12dp"
+        android:textColor="@color/ad_text_secondary"
         android:textSize="12sp" />
 </LinearLayout>

@@ -27,11 +27,12 @@
     <!--  ! Target API == 29: WRT + [ MSV<29> ] / WRT + [ MSV<28> ] + LGC -->
     <!--  ! Target API >= 30: WRT + [ MSV<29> ] + LGC  + MAN -->
 
+    <!-- AutoDroid Runner：自定义权限改到独立命名空间，避免与官方 AutoJs6 共存安装时签名级权限冲突 -->
     <permission
-        android:name="org.autojs.permission.PLUGIN"
+        android:name="com.autodroid.runner.permission.PLUGIN"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="org.autojs.permission.PLUGIN" />
+    <uses-permission android:name="com.autodroid.runner.permission.PLUGIN" />
 
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"

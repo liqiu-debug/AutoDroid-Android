@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AutoDroid Runner 设计系统：配色 -->
+<resources>
+    <color name="ad_primary">#1677FF</color>
+    <color name="ad_primary_dark">#0E5AD9</color>
+    <color name="ad_bg">#F5F6F8</color>
+    <color name="ad_surface">#FFFFFF</color>
+    <color name="ad_text">#1F2329</color>
+    <color name="ad_text_secondary">#646A73</color>
+    <color name="ad_text_tertiary">#A9AEB8</color>
+    <color name="ad_border">#E5E6EB</color>
+    <color name="ad_input_bg">#F2F3F5</color>
+
+    <!-- 状态色 -->
+    <color name="ad_pass">#00B42A</color>
+    <color name="ad_pass_bg">#E8FFEA</color>
+    <color name="ad_fail">#F53F3F</color>
+    <color name="ad_fail_bg">#FFECE8</color>
+    <color name="ad_warn">#FF7D00</color>
+    <color name="ad_warn_bg">#FFF7E8</color>
+    <color name="ad_idle">#86909C</color>
+    <color name="ad_idle_bg">#F2F3F5</color>
+</resources>

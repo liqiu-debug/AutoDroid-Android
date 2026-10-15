@@ -236,7 +236,7 @@ class ScheduleEditActivity : AppCompatActivity() {
     }
 
     private fun pickTarget(onPicked: (Int, String) -> Unit) {
-        val api = AutoDroidApi.service(Session.serverUrl) { Session.token }
+        val api = AutoDroidApi.service(Session.serverUrl)
         val handler = object {
             fun show(names: List<String>, ids: List<Int>) {
                 if (names.isEmpty()) {

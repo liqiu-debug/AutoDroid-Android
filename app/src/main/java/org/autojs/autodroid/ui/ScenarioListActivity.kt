@@ -57,7 +57,7 @@ class ScenarioListActivity : AppCompatActivity() {
     private fun load() {
         statusText.text = "加载中…"
         val keyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
-        AutoDroidApi.service(Session.serverUrl) { Session.token }
+        AutoDroidApi.service(Session.serverUrl)
             .listScenarios(keyword = keyword)
             .enqueue(object : Callback<PaginatedScenarios> {
                 override fun onResponse(call: Call<PaginatedScenarios>, response: Response<PaginatedScenarios>) {
@@ -85,6 +85,25 @@ class ScenarioAdapter(private val context: Context) : BaseAdapter() {
         items = newItems
         notifyDataSetChanged()
     }
+    private fun applyStatusBadge(view: View, status: String?) {
+        val badge = view.findViewById<TextView>(R.id.text_badge) ?: return
+        if (status.isNullOrBlank()) {
+            badge.visibility = View.GONE
+            return
+        }
+        badge.visibility = View.VISIBLE
+        val (bgRes, colorRes) = when (status.uppercase()) {
+            "PASS" -> R.drawable.ad_chip_pass to R.color.ad_pass
+            "FAIL", "FAILED", "ERROR" -> R.drawable.ad_chip_fail to R.color.ad_fail
+            "WARNING" -> R.drawable.ad_chip_warn to R.color.ad_warn
+            "RUNNING" -> R.drawable.ad_chip_idle to R.color.ad_primary
+            else -> R.drawable.ad_chip_idle to R.color.ad_idle
+        }
+        badge.setBackgroundResource(bgRes)
+        badge.setTextColor(androidx.core.content.ContextCompat.getColor(view.context, colorRes))
+        badge.text = status
+    }
+
 
     override fun getCount(): Int = items.size
     override fun getItem(position: Int): ScenarioItem = items[position]
@@ -101,6 +120,7 @@ class ScenarioAdapter(private val context: Context) : BaseAdapter() {
             item.description?.takeIf { it.isNotBlank() }?.let { append(" · $it") }
         }
         view.findViewById<TextView>(R.id.text_sub).text = subtitle
+        applyStatusBadge(view, item.last_run_status)
         return view
     }
 }

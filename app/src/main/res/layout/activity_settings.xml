@@ -2,116 +2,159 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/ad_bg"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="设置"
-            android:textColor="#1F2329"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="服务器地址"
-            android:textColor="#646A73"
-            android:textSize="13sp" />
-
-        <EditText
-            android:id="@+id/input_server"
+        <LinearLayout
+            style="@style/AdCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="http://host:8000"
-            android:inputType="textUri"
-            android:maxLines="1" />
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="设备名（平台设备中心展示）"
-            android:textColor="#646A73"
-            android:textSize="13sp" />
+            <TextView
+                style="@style/AdSectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="0dp"
+                android:text="连接与账号" />
 
-        <EditText
-            android:id="@+id/input_device_name"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="服务器地址"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/input_server"
+                style="@style/AdInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="http://host:8000"
+                android:inputType="textUri"
+                android:maxLines="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="设备名（平台设备中心展示）"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/input_device_name"
+                style="@style/AdInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="如：工位A-OPPO"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <Switch
+                android:id="@+id/switch_notify"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="执行后发送飞书通知（默认）"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btn_save"
+                style="@style/AdButtonPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="保存设置" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/AdCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="如：工位A-OPPO"
-            android:inputType="text"
-            android:maxLines="1" />
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp"
+            android:orientation="vertical">
 
-        <Switch
-            android:id="@+id/switch_notify"
+            <TextView
+                style="@style/AdSectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="0dp"
+                android:text="运行环境（UI 自动化必需）" />
+
+            <TextView
+                android:id="@+id/text_accessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btn_accessibility"
+                style="@style/AdButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="打开系统无障碍设置" />
+
+            <Button
+                android:id="@+id/btn_battery"
+                style="@style/AdButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="加入电池优化白名单（防后台被杀）" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/AdCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="执行后发送飞书通知（默认开关，单次运行可覆盖）" />
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp"
+            android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="保存设置" />
+            <TextView
+                style="@style/AdSectionTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="0dp"
+                android:text="其他" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:background="#E5E6EB" />
+            <Button
+                android:id="@+id/btn_autojs"
+                style="@style/AdButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="打开 AutoJs6 控制台（高级）" />
 
-        <TextView
-            android:id="@+id/text_accessibility"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#646A73"
-            android:textSize="13sp" />
+            <Button
+                android:id="@+id/btn_logout"
+                style="@style/AdButtonSecondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="退出登录" />
 
-        <Button
-            android:id="@+id/btn_accessibility"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="打开系统无障碍设置" />
-
-        <Button
-            android:id="@+id/btn_battery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="加入电池优化白名单（防后台被杀）" />
-
-        <Button
-            android:id="@+id/btn_autojs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="打开 AutoJs6 控制台（高级）" />
-
-        <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="退出登录" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="AutoDroid Runner · 执行引擎 AutoJs6 6.7.0（冻结基线）"
-            android:textColor="#A9AEB8"
-            android:textSize="12sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="AutoDroid Runner · 执行引擎 AutoJs6 6.7.0（冻结基线）"
+                android:textColor="@color/ad_text_tertiary"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

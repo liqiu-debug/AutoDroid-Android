@@ -53,6 +53,16 @@ data class FolderTreeResponse(val tree: List<FolderNode> = emptyList(), val all_
 
 data class DeviceRegisterResponse(val device_serial: String? = null)
 
+/** 设备注册请求体（Retrofit @Body 不支持 Map<String, ?> 通配符类型）。 */
+data class DeviceRegisterRequest(
+    val android_id: String? = null,
+    val name: String? = null,
+    val model: String? = null,
+    val brand: String? = null,
+    val android_version: String? = null,
+    val resolution: String? = null,
+)
+
 data class ExecutionItem(
     val id: Int,
     val scenario_name: String? = null,
@@ -94,7 +104,7 @@ interface ApiService {
     ): Call<LoginResponse>
 
     @POST("device-runs/register")
-    fun registerDevice(@Body payload: Map<String, Any?>): Call<DeviceRegisterResponse>
+    fun registerDevice(@Body payload: DeviceRegisterRequest): Call<DeviceRegisterResponse>
 
     @GET("folders/tree")
     fun folderTree(): Call<FolderTreeResponse>
@@ -149,7 +159,14 @@ object AutoDroidApi {
     @Volatile
     private var currentBaseUrl: String = ""
 
-    fun service(serverUrl: String, tokenProvider: () -> String?): ApiService {
+    /**
+     * 按服务器地址获取 API 服务。
+     *
+     * 注意：拦截器直接读取 [org.autojs.autodroid.data.Session.token]（请求时取值），
+     * 不要在构建时捕获 token —— Retrofit 单例会缓存首个拦截器，登录前构建的实例
+     * 会一直带空 token 导致 401。
+     */
+    fun service(serverUrl: String): ApiService {
         val normalized = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
         synchronized(this) {
             if (retrofit == null || normalized != currentBaseUrl) {
@@ -159,9 +176,9 @@ object AutoDroidApi {
                     .writeTimeout(60, TimeUnit.SECONDS)
                     .addInterceptor { chain ->
                         val builder = chain.request().newBuilder()
-                        tokenProvider()?.takeIf { it.isNotBlank() }?.let {
-                            builder.header("Authorization", "Bearer $it")
-                        }
+                        org.autojs.autodroid.data.Session.token
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let { builder.header("Authorization", "Bearer $it") }
                         chain.proceed(builder.build())
                     }
                     .build()

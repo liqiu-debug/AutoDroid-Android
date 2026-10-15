@@ -79,7 +79,7 @@ class RunActivity : AppCompatActivity() {
         resultText.text = ""
         statusText.text = "正在拉取脚本包…"
 
-        val api = AutoDroidApi.service(Session.serverUrl) { Session.token }
+        val api = AutoDroidApi.service(Session.serverUrl)
         val call = if (kind == "scenario") {
             api.scenarioScript(targetId)
         } else {
@@ -189,17 +189,25 @@ class RunStepAdapter(private val context: Context) : BaseAdapter() {
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.item_run_step, parent, false)
         val step = steps[position]
-        val mark = when (step.status) {
-            "PASS" -> "✓"
-            "SKIP" -> "⏭"
-            "WARNING" -> "⚠"
-            else -> "✗"
+        val (mark, colorRes) = when (step.status) {
+            "PASS" -> "✓" to R.color.ad_pass
+            "SKIP" -> "⏭" to R.color.ad_idle
+            "WARNING" -> "⚠" to R.color.ad_warn
+            else -> "✗" to R.color.ad_fail
         }
-        val text = buildString {
-            append("$mark ${step.order}. ${step.action} · ${step.status} · ${"%.2f".format(step.duration)}s")
-            step.error?.takeIf { it.isNotBlank() }?.let { append("\n    $it") }
+        view.findViewById<TextView>(R.id.text_mark).apply {
+            text = mark
+            setTextColor(androidx.core.content.ContextCompat.getColor(context, colorRes))
         }
-        view.findViewById<TextView>(R.id.text_step).text = text
+        view.findViewById<TextView>(R.id.text_step).text =
+            "${step.order}. ${step.action} · ${step.status} · ${"%.2f".format(step.duration)}s"
+        val errorView = view.findViewById<TextView>(R.id.text_step_error)
+        if (step.error.isNullOrBlank()) {
+            errorView.visibility = View.GONE
+        } else {
+            errorView.visibility = View.VISIBLE
+            errorView.text = step.error
+        }
         return view
     }
 }

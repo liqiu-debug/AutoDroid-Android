@@ -52,7 +52,7 @@ class ScheduledRunService : Service() {
             return
         }
 
-        val api = AutoDroidApi.service(Session.serverUrl) { Session.token }
+        val api = AutoDroidApi.service(Session.serverUrl)
         val call = if (run.kind == "scenario") {
             api.scenarioScript(run.targetId)
         } else {

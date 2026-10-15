@@ -2,67 +2,67 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/ad_bg"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/ad_bg_header"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <TextView
+            style="@style/AdHeaderTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="用例"
-            android:textColor="#1F2329"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:text="用例" />
 
         <Button
             android:id="@+id/btn_scenarios"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/AdButtonGhost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="0dp"
             android:text="场景" />
 
         <Button
             android:id="@+id/btn_reports"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/AdButtonGhost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="0dp"
             android:text="报告" />
 
         <Button
             android:id="@+id/btn_schedules"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/AdButtonGhost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="0dp"
             android:text="定时" />
 
         <Button
             android:id="@+id/btn_settings"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/AdButtonGhost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="0dp"
             android:text="设置" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp">
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
 
         <EditText
             android:id="@+id/input_keyword"
+            style="@style/AdInput"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -73,8 +73,11 @@
 
         <Button
             android:id="@+id/btn_search"
+            style="@style/AdButtonPrimary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:minHeight="44dp"
             android:text="搜索" />
     </LinearLayout>
 
@@ -83,21 +86,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp" />
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="4dp" />
 
     <ListView
         android:id="@+id/list_cases"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="4dp"
         android:layout_weight="1"
-        android:divider="#E5E6EB"
-        android:dividerHeight="0.5dp" />
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:scrollbars="none" />
 
     <TextView
         android:id="@+id/text_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp"
-        android:textColor="#646A73"
+        android:textColor="@color/ad_text_tertiary"
         android:textSize="12sp" />
 </LinearLayout>

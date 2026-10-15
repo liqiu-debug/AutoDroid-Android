@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
+import org.autojs.autodroid.net.DeviceRegisterRequest
 import org.autojs.autodroid.net.DeviceRegisterResponse
 import org.autojs.autodroid.net.LoginResponse
 import org.autojs.autojs6.R
@@ -60,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
         loginButton.isEnabled = false
         statusText.text = "登录中…"
         Session.serverUrl = server
-        AutoDroidApi.service(server) { null }.login(username, password)
+        AutoDroidApi.service(server).login(username, password)
             .enqueue(object : Callback<LoginResponse> {
                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                     loginButton.isEnabled = true
@@ -84,27 +85,31 @@ class LoginActivity : AppCompatActivity() {
             })
     }
 
-    /** 登录成功后向平台注册本机（设备中心可见 autojs6:<androidId>）。 */
+    /** 登录成功后向平台注册本机（设备中心可见 autojs6:<androidId>）；失败不影响使用。 */
     private fun registerDevice() {
-        val payload = mapOf(
-            "android_id" to Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID),
-            "name" to Session.deviceName.ifBlank { Build.MODEL ?: "" },
-            "model" to (Build.MODEL ?: ""),
-            "brand" to (Build.BRAND ?: ""),
-            "android_version" to (Build.VERSION.RELEASE ?: ""),
-            "resolution" to "${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}",
-        )
-        AutoDroidApi.service(Session.serverUrl) { Session.token }
-            .registerDevice(payload)
-            .enqueue(object : Callback<DeviceRegisterResponse> {
-                override fun onResponse(call: Call<DeviceRegisterResponse>, response: Response<DeviceRegisterResponse>) {
-                    Log.i(TAG, "设备注册完成: ${response.body()?.device_serial}")
-                }
+        try {
+            val payload = DeviceRegisterRequest(
+                android_id = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID),
+                name = Session.deviceName.ifBlank { Build.MODEL ?: "" },
+                model = Build.MODEL ?: "",
+                brand = Build.BRAND ?: "",
+                android_version = Build.VERSION.RELEASE ?: "",
+                resolution = "${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}",
+            )
+            AutoDroidApi.service(Session.serverUrl)
+                .registerDevice(payload)
+                .enqueue(object : Callback<DeviceRegisterResponse> {
+                    override fun onResponse(call: Call<DeviceRegisterResponse>, response: Response<DeviceRegisterResponse>) {
+                        Log.i(TAG, "设备注册完成: ${response.body()?.device_serial}")
+                    }
 
-                override fun onFailure(call: Call<DeviceRegisterResponse>, t: Throwable) {
-                    Log.w(TAG, "设备注册失败（不影响使用）: ${t.message}")
-                }
-            })
+                    override fun onFailure(call: Call<DeviceRegisterResponse>, t: Throwable) {
+                        Log.w(TAG, "设备注册失败（不影响使用）: ${t.message}")
+                    }
+                })
+        } catch (e: Exception) {
+            Log.w(TAG, "设备注册异常（不影响使用）: ${e.message}")
+        }
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

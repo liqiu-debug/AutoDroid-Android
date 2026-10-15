@@ -506,12 +506,13 @@ android {
             manifestPlaceholders.putAll(
                 mapOf(
                     "CHANNEL" to flavorNameApp,
-                    "appName" to "@string/app_name",
+                    "appName" to "AutoDroid Runner",
                     // AutoDroid Runner：主入口改为 org.autojs.autodroid.ui.MainActivity，
                     // 原 AutoJs6 启动别名不再作为桌面图标（应用内保留控制台入口）。
                     "intentCategory" to "android.intent.category.DEFAULT",
                     "intentCategoryInrt" to "android.intent.category.DEFAULT",
-                    "authorities" to "org.autojs.autojs6.fileprovider",
+                    // 独立 authority，避免与官方 AutoJs6 共存安装冲突
+                    "authorities" to "com.autodroid.runner.fileprovider",
                     "icon" to "@mipmap/ic_app_launcher_adaptive",
                 )
             )
@@ -537,7 +538,7 @@ android {
                     "appName" to "AutoJs6.$flavorNameInrt",
                     "intentCategory" to "android.intent.category.DEFAULT",
                     "intentCategoryInrt" to "android.intent.category.LAUNCHER",
-                    "authorities" to "org.autojs.autojs6.$flavorNameInrt.fileprovider",
+                    "authorities" to "com.autodroid.runner.$flavorNameInrt.fileprovider",
                     "icon" to "@mipmap/ic_launcher",
                 )
             )

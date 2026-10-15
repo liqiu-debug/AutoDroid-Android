@@ -38,7 +38,7 @@ class ReportListActivity : AppCompatActivity() {
             val item = adapter.getItem(position)
             startActivity(
                 Intent(this, ReportDetailActivity::class.java)
-                    .putExtra(ReportDetailActivity.EXTRA_EXECUTION_ID, item.id)
+                    .putExtra(ReportDetailActivity.EXTRA_EXECUTION_ID, item.id.toLong())
                     .putExtra(ReportDetailActivity.EXTRA_TITLE, item.scenario_name ?: "执行报告")
             )
         }
@@ -49,7 +49,7 @@ class ReportListActivity : AppCompatActivity() {
 
     private fun load() {
         statusText.text = "加载中…"
-        AutoDroidApi.service(Session.serverUrl) { Session.token }
+        AutoDroidApi.service(Session.serverUrl)
             .listExecutions()
             .enqueue(object : Callback<PaginatedExecutions> {
                 override fun onResponse(call: Call<PaginatedExecutions>, response: Response<PaginatedExecutions>) {
@@ -77,6 +77,25 @@ class ExecutionAdapter : BaseAdapter() {
         items = newItems
         notifyDataSetChanged()
     }
+    private fun applyStatusBadge(view: View, status: String?) {
+        val badge = view.findViewById<TextView>(R.id.text_badge) ?: return
+        if (status.isNullOrBlank()) {
+            badge.visibility = View.GONE
+            return
+        }
+        badge.visibility = View.VISIBLE
+        val (bgRes, colorRes) = when (status.uppercase()) {
+            "PASS" -> R.drawable.ad_chip_pass to R.color.ad_pass
+            "FAIL", "FAILED", "ERROR" -> R.drawable.ad_chip_fail to R.color.ad_fail
+            "WARNING" -> R.drawable.ad_chip_warn to R.color.ad_warn
+            "RUNNING" -> R.drawable.ad_chip_idle to R.color.ad_primary
+            else -> R.drawable.ad_chip_idle to R.color.ad_idle
+        }
+        badge.setBackgroundResource(bgRes)
+        badge.setTextColor(androidx.core.content.ContextCompat.getColor(view.context, colorRes))
+        badge.text = status
+    }
+
 
     override fun getCount(): Int = items.size
     override fun getItem(position: Int): ExecutionItem = items[position]
@@ -101,6 +120,7 @@ class ExecutionAdapter : BaseAdapter() {
             item.duration?.let { append(" · ${"%.1f".format(it)}s") }
         }
         view.findViewById<TextView>(R.id.text_sub).text = subtitle
+        applyStatusBadge(view, item.status)
         return view
     }
 }

@@ -2,74 +2,110 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/ad_bg"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:layout_marginTop="48dp"
-            android:text="AutoDroid Runner"
-            android:textColor="#1F2329"
-            android:textSize="26sp"
-            android:textStyle="bold" />
+            android:background="@drawable/ad_bg_card"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="32dp"
-            android:text="移动端 UI 自动化执行器（引擎：AutoJs6）"
-            android:textColor="#646A73"
-            android:textSize="13sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="AutoDroid Runner"
+                android:textColor="@color/ad_primary"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/input_server"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="服务器地址（如 http://host:8000）"
-            android:inputType="textUri"
-            android:maxLines="1" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="28dp"
+                android:text="移动端 UI 自动化执行器"
+                android:textColor="@color/ad_text_tertiary"
+                android:textSize="13sp" />
 
-        <EditText
-            android:id="@+id/input_username"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="账号"
-            android:inputType="text"
-            android:maxLines="1" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="服务器地址"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
 
-        <EditText
-            android:id="@+id/input_password"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="密码"
-            android:inputType="textPassword"
-            android:maxLines="1" />
+            <EditText
+                android:id="@+id/input_server"
+                style="@style/AdInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="http://host:8000"
+                android:inputType="textUri"
+                android:maxLines="1" />
 
-        <Button
-            android:id="@+id/btn_login"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="登录" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="账号"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
 
-        <TextView
-            android:id="@+id/text_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="#646A73"
-            android:textSize="13sp" />
+            <EditText
+                android:id="@+id/input_username"
+                style="@style/AdInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="请输入账号"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="密码"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/input_password"
+                style="@style/AdInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:hint="请输入密码"
+                android:inputType="textPassword"
+                android:maxLines="1" />
+
+            <Button
+                android:id="@+id/btn_login"
+                style="@style/AdButtonPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:text="登 录" />
+
+            <TextView
+                android:id="@+id/text_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:textColor="@color/ad_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
