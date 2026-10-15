@@ -64,10 +64,13 @@ class CaseListActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         findViewById<Button>(R.id.btn_scenarios).setOnClickListener {
-            Toast.makeText(this, "场景列表下个增量接入", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ScenarioListActivity::class.java))
         }
         findViewById<Button>(R.id.btn_reports).setOnClickListener {
             startActivity(Intent(this, ReportListActivity::class.java))
+        }
+        findViewById<Button>(R.id.btn_schedules).setOnClickListener {
+            startActivity(Intent(this, ScheduleListActivity::class.java))
         }
 
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {

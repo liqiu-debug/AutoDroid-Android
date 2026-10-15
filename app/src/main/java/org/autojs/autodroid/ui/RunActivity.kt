@@ -49,6 +49,7 @@ class RunActivity : AppCompatActivity() {
 
         val caseId = intent.getIntExtra(EXTRA_CASE_ID, -1)
         val caseName = intent.getStringExtra(EXTRA_CASE_NAME) ?: "用例"
+        val kind = intent.getStringExtra(EXTRA_KIND) ?: "case"
 
         findViewById<TextView>(R.id.text_title).text = caseName
         statusText = findViewById(R.id.text_status)
@@ -59,18 +60,18 @@ class RunActivity : AppCompatActivity() {
         adapter = RunStepAdapter(this)
         findViewById<ListView>(R.id.list_steps).adapter = adapter
 
-        findViewById<Button>(R.id.btn_run).setOnClickListener { startRun(caseId, caseName) }
+        findViewById<Button>(R.id.btn_run).setOnClickListener { startRun(kind, caseId, caseName) }
 
         if (caseId >= 0) {
-            startRun(caseId, caseName)
+            startRun(kind, caseId, caseName)
         } else {
             statusText.text = "缺少用例 ID"
         }
     }
 
-    private fun startRun(caseId: Int, caseName: String) {
-        if (caseId < 0) {
-            statusText.text = "缺少用例 ID"
+    private fun startRun(kind: String, targetId: Int, targetName: String) {
+        if (targetId < 0) {
+            statusText.text = "缺少目标 ID"
             return
         }
         handler.removeCallbacks(pollRunnable)
@@ -78,9 +79,13 @@ class RunActivity : AppCompatActivity() {
         resultText.text = ""
         statusText.text = "正在拉取脚本包…"
 
-        AutoDroidApi.service(Session.serverUrl) { Session.token }
-            .caseScript(caseId)
-            .enqueue(object : Callback<ScriptBundle> {
+        val api = AutoDroidApi.service(Session.serverUrl) { Session.token }
+        val call = if (kind == "scenario") {
+            api.scenarioScript(targetId)
+        } else {
+            api.caseScript(targetId)
+        }
+        call.enqueue(object : Callback<ScriptBundle> {
                 override fun onResponse(call: Call<ScriptBundle>, response: Response<ScriptBundle>) {
                     if (!response.isSuccessful) {
                         val detail = try {
@@ -103,7 +108,7 @@ class RunActivity : AppCompatActivity() {
                         )
                         runDir = dir
                         RunBridge.pruneRuns(this@RunActivity)
-                        statusText.text = "执行中…（$caseName）"
+                        statusText.text = "执行中…（$targetName）"
                         Scripts.run(
                             this@RunActivity,
                             ScriptFile(File(dir, "main.js").absolutePath),
@@ -160,6 +165,7 @@ class RunActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_CASE_ID = "case_id"
         const val EXTRA_CASE_NAME = "case_name"
+        const val EXTRA_KIND = "target_kind" // case | scenario
         private const val POLL_INTERVAL_MS = 1500L
         private const val POLL_TIMEOUT_MS = 15 * 60 * 1000L
     }

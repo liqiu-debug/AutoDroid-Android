@@ -276,6 +276,43 @@
             android:exported="false"
             android:theme="@style/AppTheme" />
 
+        <activity
+            android:name="org.autojs.autodroid.ui.ScenarioListActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.ScheduleListActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.ScheduleEditActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <!-- AutoDroid Runner 定时任务：闹钟触发 + 开机重排 + 前台执行服务 -->
+        <receiver
+            android:name="org.autojs.autodroid.schedule.ScheduleReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="org.autojs.autodroid.schedule.ScheduleBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="org.autojs.autodroid.schedule.ScheduledRunService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="scheduled UI automation run" />
+        </service>
+
         <activity-alias
             android:name="org.autojs.autojs.launcher.AdaptiveIconAlias"
             android:enabled="true"

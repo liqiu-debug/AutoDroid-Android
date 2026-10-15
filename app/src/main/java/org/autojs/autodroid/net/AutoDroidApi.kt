@@ -31,6 +31,16 @@ data class CaseItem(
 
 data class PaginatedCases(val total: Int = 0, val items: List<CaseItem> = emptyList())
 
+data class ScenarioItem(
+    val id: Int,
+    val name: String,
+    val description: String? = null,
+    val folder_id: Int? = null,
+    val last_run_status: String? = null,
+)
+
+data class PaginatedScenarios(val total: Int = 0, val items: List<ScenarioItem> = emptyList())
+
 data class FolderNode(
     val id: String? = null,
     val name: String? = null,
@@ -97,6 +107,14 @@ interface ApiService {
         @Query("folder_id") folderId: Int? = null,
     ): Call<PaginatedCases>
 
+    @GET("scenarios/")
+    fun listScenarios(
+        @Query("skip") skip: Int = 0,
+        @Query("limit") limit: Int = 200,
+        @Query("keyword") keyword: String? = null,
+        @Query("folder_id") folderId: Int? = null,
+    ): Call<PaginatedScenarios>
+
     @GET("reports/executions")
     fun listExecutions(
         @Query("skip") skip: Int = 0,
@@ -109,6 +127,12 @@ interface ApiService {
     @GET("app-runs/cases/{id}/script")
     fun caseScript(
         @Path("id") caseId: Int,
+        @Query("env_id") envId: Int? = null,
+    ): Call<ScriptBundle>
+
+    @GET("app-runs/scenarios/{id}/script")
+    fun scenarioScript(
+        @Path("id") scenarioId: Int,
         @Query("env_id") envId: Int? = null,
     ): Call<ScriptBundle>
 }

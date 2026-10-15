@@ -38,6 +38,14 @@
             android:text="报告" />
 
         <Button
+            android:id="@+id/btn_schedules"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="0dp"
+            android:text="定时" />
+
+        <Button
             android:id="@+id/btn_settings"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
