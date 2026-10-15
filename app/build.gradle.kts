@@ -455,7 +455,8 @@ dependencies /* Archived */ {
 }
 
 dependencies /* Reserved for auto append by IDE */ {
-
+    // AutoDroid Runner：登录态加密存储
+    implementation("androidx.security:security-crypto:1.0.0")
 }
 
 android {
@@ -500,6 +501,8 @@ android {
             versionName = versions.appVersionName
             buildConfigField("String", "CHANNEL", "\"$flavorNameApp\"")
             buildConfigField("boolean", "is${flavorNameInrt.uppercaseFirstChar()}", "false")
+            // AutoDroid Runner：默认平台地址（可在 App 设置页修改）
+            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"http://127.0.0.1:8000\"")
             manifestPlaceholders.putAll(
                 mapOf(
                     "CHANNEL" to flavorNameApp,
@@ -525,6 +528,8 @@ android {
 
             buildConfigField("String", "CHANNEL", "\"$flavorNameInrt\"")
             buildConfigField("boolean", "is${flavorNameInrt.uppercaseFirstChar()}", "true")
+            // AutoDroid Runner：默认平台地址（可在 App 设置页修改）
+            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"http://127.0.0.1:8000\"")
 
             manifestPlaceholders.putAll(
                 mapOf(

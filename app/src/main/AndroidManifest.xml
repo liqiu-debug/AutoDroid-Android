@@ -246,6 +246,26 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="org.autojs.autodroid.ui.LoginActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.CaseListActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.RunActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
         <activity-alias
             android:name="org.autojs.autojs.launcher.AdaptiveIconAlias"
             android:enabled="true"
