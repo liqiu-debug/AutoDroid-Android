@@ -266,6 +266,16 @@
             android:exported="false"
             android:theme="@style/AppTheme" />
 
+        <activity
+            android:name="org.autojs.autodroid.ui.ReportListActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.ReportDetailActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
         <activity-alias
             android:name="org.autojs.autojs.launcher.AdaptiveIconAlias"
             android:enabled="true"

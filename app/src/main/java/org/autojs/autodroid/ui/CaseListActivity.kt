@@ -67,7 +67,7 @@ class CaseListActivity : AppCompatActivity() {
             Toast.makeText(this, "场景列表下个增量接入", Toast.LENGTH_SHORT).show()
         }
         findViewById<Button>(R.id.btn_reports).setOnClickListener {
-            Toast.makeText(this, "报告中心下个增量接入", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ReportListActivity::class.java))
         }
 
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
