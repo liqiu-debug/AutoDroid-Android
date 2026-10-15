@@ -41,6 +41,28 @@ data class ScenarioItem(
 
 data class PaginatedScenarios(val total: Int = 0, val items: List<ScenarioItem> = emptyList())
 
+/** 标准步骤（用例详情展示用）。 */
+data class CaseStepItem(
+    val order: Int = 0,
+    val action: String = "",
+    val description: String? = null,
+    val args: com.google.gson.JsonObject? = null,
+    val execute_on: List<String>? = null,
+    val platform_overrides: com.google.gson.JsonObject? = null,
+    val timeout: Int = 10,
+    val error_strategy: String = "ABORT",
+    val retry_count: Int = 0,
+)
+
+/** 场景步骤（子用例编排）。 */
+data class ScenarioStepItem(
+    val id: Int = 0,
+    val scenario_id: Int = 0,
+    val case_id: Int = 0,
+    val order: Int = 0,
+    val alias: String? = null,
+)
+
 data class FolderNode(
     val id: String? = null,
     val name: String? = null,
@@ -124,6 +146,12 @@ interface ApiService {
         @Query("keyword") keyword: String? = null,
         @Query("folder_id") folderId: Int? = null,
     ): Call<PaginatedScenarios>
+
+    @GET("cases/{id}/steps")
+    fun caseSteps(@Path("id") caseId: Int): Call<List<CaseStepItem>>
+
+    @GET("scenarios/{id}/steps")
+    fun scenarioSteps(@Path("id") scenarioId: Int): Call<List<ScenarioStepItem>>
 
     @GET("reports/executions")
     fun listExecutions(

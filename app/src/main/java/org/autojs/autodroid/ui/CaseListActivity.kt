@@ -47,15 +47,22 @@ class CaseListActivity : AppCompatActivity() {
         spinner = findViewById(R.id.spinner_folder)
         keywordInput = findViewById(R.id.input_keyword)
 
-        adapter = CaseAdapter(this)
+        adapter = CaseAdapter(this, showRunButton = true) { item ->
+            startActivity(
+                Intent(this, RunActivity::class.java)
+                    .putExtra(RunActivity.EXTRA_KIND, "case")
+                    .putExtra(RunActivity.EXTRA_CASE_ID, item.id)
+                    .putExtra(RunActivity.EXTRA_CASE_NAME, item.name)
+            )
+        }
         val listView = findViewById<ListView>(R.id.list_cases)
         listView.adapter = adapter
         listView.setOnItemClickListener { _, _, position, _ ->
             val item = adapter.getItem(position)
             startActivity(
-                Intent(this, RunActivity::class.java)
-                    .putExtra(RunActivity.EXTRA_CASE_ID, item.id)
-                    .putExtra(RunActivity.EXTRA_CASE_NAME, item.name)
+                Intent(this, CaseDetailActivity::class.java)
+                    .putExtra(CaseDetailActivity.EXTRA_CASE_ID, item.id)
+                    .putExtra(CaseDetailActivity.EXTRA_CASE_NAME, item.name)
             )
         }
 
@@ -142,7 +149,11 @@ class CaseListActivity : AppCompatActivity() {
 }
 
 /** 用例列表适配器（名称 + 状态/描述副标题）。 */
-class CaseAdapter(private val context: Context) : BaseAdapter() {
+class CaseAdapter(
+    private val context: Context,
+    private val showRunButton: Boolean = true,
+    private val onRun: ((CaseItem) -> Unit)? = null,
+) : BaseAdapter() {
 
     private var items: List<CaseItem> = emptyList()
 
@@ -186,6 +197,13 @@ class CaseAdapter(private val context: Context) : BaseAdapter() {
         }
         view.findViewById<TextView>(R.id.text_sub).text = subtitle
         applyStatusBadge(view, item.last_run_status)
+        val runButton = view.findViewById<Button>(R.id.btn_run_row)
+        if (showRunButton && onRun != null) {
+            runButton.visibility = View.VISIBLE
+            runButton.setOnClickListener { onRun.invoke(item) }
+        } else {
+            runButton.visibility = View.GONE
+        }
         return view
     }
 }

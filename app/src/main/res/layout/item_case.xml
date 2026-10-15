@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/ad_bg_card"
+    android:descendantFocusability="blocksDescendants"
     android:layout_marginStart="12dp"
     android:layout_marginEnd="12dp"
     android:layout_marginTop="8dp"
@@ -46,4 +47,17 @@
         android:background="@drawable/ad_chip_idle"
         android:textColor="@color/ad_idle"
         android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btn_run_row"
+        style="@style/AdButtonPrimary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:minHeight="34dp"
+        android:minWidth="0dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:text="运行"
+        android:textSize="13sp" />
 </LinearLayout>

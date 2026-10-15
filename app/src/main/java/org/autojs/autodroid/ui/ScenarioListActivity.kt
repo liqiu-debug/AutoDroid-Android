@@ -36,17 +36,23 @@ class ScenarioListActivity : AppCompatActivity() {
 
         statusText = findViewById(R.id.text_status)
         keywordInput = findViewById(R.id.input_keyword)
-        adapter = ScenarioAdapter(this)
+        adapter = ScenarioAdapter(this) { item ->
+            startActivity(
+                Intent(this, RunActivity::class.java)
+                    .putExtra(RunActivity.EXTRA_KIND, "scenario")
+                    .putExtra(RunActivity.EXTRA_CASE_ID, item.id)
+                    .putExtra(RunActivity.EXTRA_CASE_NAME, item.name)
+            )
+        }
 
         val listView = findViewById<ListView>(R.id.list_scenarios)
         listView.adapter = adapter
         listView.setOnItemClickListener { _, _, position, _ ->
             val item = adapter.getItem(position)
             startActivity(
-                Intent(this, RunActivity::class.java)
-                    .putExtra(RunActivity.EXTRA_KIND, "scenario")
-                    .putExtra(RunActivity.EXTRA_CASE_ID, item.id)
-                    .putExtra(RunActivity.EXTRA_CASE_NAME, item.name)
+                Intent(this, ScenarioDetailActivity::class.java)
+                    .putExtra(ScenarioDetailActivity.EXTRA_SCENARIO_ID, item.id)
+                    .putExtra(ScenarioDetailActivity.EXTRA_SCENARIO_NAME, item.name)
             )
         }
 
@@ -77,7 +83,10 @@ class ScenarioListActivity : AppCompatActivity() {
     }
 }
 
-class ScenarioAdapter(private val context: Context) : BaseAdapter() {
+class ScenarioAdapter(
+    private val context: Context,
+    private val onRun: ((ScenarioItem) -> Unit)? = null,
+) : BaseAdapter() {
 
     private var items: List<ScenarioItem> = emptyList()
 
@@ -121,6 +130,13 @@ class ScenarioAdapter(private val context: Context) : BaseAdapter() {
         }
         view.findViewById<TextView>(R.id.text_sub).text = subtitle
         applyStatusBadge(view, item.last_run_status)
+        val runButton = view.findViewById<Button>(R.id.btn_run_row)
+        if (onRun != null) {
+            runButton.visibility = View.VISIBLE
+            runButton.setOnClickListener { onRun.invoke(item) }
+        } else {
+            runButton.visibility = View.GONE
+        }
         return view
     }
 }

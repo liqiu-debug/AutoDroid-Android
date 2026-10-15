@@ -283,6 +283,16 @@
             android:theme="@style/AppTheme" />
 
         <activity
+            android:name="org.autojs.autodroid.ui.CaseDetailActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
+            android:name="org.autojs.autodroid.ui.ScenarioDetailActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
             android:name="org.autojs.autodroid.ui.ScheduleListActivity"
             android:exported="false"
             android:theme="@style/AppTheme" />
