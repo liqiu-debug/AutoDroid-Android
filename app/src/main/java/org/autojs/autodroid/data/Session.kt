@@ -7,7 +7,7 @@ import androidx.security.crypto.MasterKeys
 import org.autojs.autojs6.BuildConfig
 
 /**
- * AutoDroid Runner 本地会话与设置（服务端地址 / 登录态 / 设备名 / 通知开关）。
+ * AutoDroid 本地会话与设置（服务端地址 / 登录态 / 设备名 / 通知开关）。
  *
  * 敏感字段（token）优先存入 EncryptedSharedPreferences；加密存储不可用时
  * 回退普通 SharedPreferences（开发阶段兜底，正式版再收紧）。

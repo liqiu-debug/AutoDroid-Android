@@ -1,5 +1,54 @@
 <!--suppress HtmlDeprecatedAttribute, HttpUrlsUsage -->
 
+> ## AutoDroid · Android 客户端（AutoDroid Runner）
+>
+> 本仓库是 **[AutoDroid](https://github.com/liqiu-debug/AutoDroid)** 自动化测试平台的 Android 设备端 App：
+> 登录平台后可直接在手机上执行用例 / 场景，步骤结果与报告回传平台，并支持定时任务与执行完成通知。
+>
+> - 平台端（FastAPI + Vue 3）：<https://github.com/liqiu-debug/AutoDroid>
+> - 本仓库基于 [AutoJs6 6.7.0](https://github.com/SuperMonster003/AutoJs6) fork 构建，复用其无障碍自动化引擎；
+>   **iOS 客户端将另建仓库**，本仓库只服务 Android。
+> - 应用名称 AutoDroid，包名 `com.autodroid.runner`，可与官方 AutoJs6 共存安装。
+>
+> ### 功能
+>
+> | 模块 | 说明 |
+> |---|---|
+> | 设备接入 | 登录平台并自动注册设备，服务器地址可在设置页修改 |
+> | 用例 / 场景 | 列表、关键字搜索、目录筛选、下拉刷新；行内「运行」直接执行，点击行进只读步骤详情 |
+> | 执行与回显 | 拉取平台下发的脚本包 → 本机引擎执行 → 步骤结果实时回显 → 结果回传平台（HTML 报告与飞书通知由平台侧完成） |
+> | 运行完成通知 | 用例 / 场景跑完发系统通知（全部通过 / 存在失败步骤 + 平台记录号），不依赖运行页存活 |
+> | 报告中心 | 报告列表 + 内嵌 WebView 渲染平台 HTML 报告 |
+> | 定时任务 | 设备侧定时（每天 / 每周 / 间隔 / 单次，iOS 风格滚轮选时间），到点自动执行并回传 |
+> | 设置 | 无障碍状态三态检查（启动时引导开启）、电池优化白名单、引擎控制台、登出 |
+>
+> ### 构建
+>
+> ```bash
+> JAVA_HOME=/opt/homebrew/opt/openjdk ./gradlew :app:assembleAppDebug
+> ```
+>
+> 产物位于 `app/build/outputs/apk/app/debug/runner-v6.7.0-arm64-v8a.apk`。
+> 默认平台地址取 `autodroid.server`（`gradle 属性` 或 `local.properties`，后者不入库），
+> 也可用 `-Pautodroid.server=http://<host>:8000` 指定；App 内登录页与设置页同样可改。
+>
+> ### 设备端注意事项
+>
+> - 需要开启无障碍服务；部分 ColorOS 机型会出现「已开启但未运行」，到系统设置里关开一次开关并重启设备可恢复。
+> - PC 端 uiautomator2 驱动同一台手机时会压制无障碍服务，设备端执行期间不要同时用平台驱动该设备。
+> - 设备与平台的接入协议（脚本包下发、结果上报）见平台仓库 [docs/APP_RUNNER_API.md](https://github.com/liqiu-debug/AutoDroid/blob/main/docs/APP_RUNNER_API.md)。
+>
+> ### 与上游 AutoJs6 的关系与许可
+>
+> 本仓库保留 AutoJs6 的完整提交历史与 [MPL-2.0](LICENSE) 许可证，上游代码版权归 AutoJs6 及其前身项目作者所有；
+> `org.autojs.autodroid.*` 下的 AutoDroid 客户端代码、品牌与图标资源为本项目新增。本分支不跟进上游更新。
+>
+> ---
+>
+> 以下为上游 AutoJs6 的原始说明文档，保留以便查阅引擎能力与 JavaScript API。
+
+******
+
 <div align="center">
   <p>
     <img src="https://s1.imagehub.cc/images/2023/03/07/af8ed087c9d354b9ab6142aae7bbafb6.png" alt="autojs6-banner_800×224" border="0" width="704" />

@@ -2,6 +2,8 @@
 
 import com.android.build.api.variant.FilterConfiguration
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
+import java.io.InputStream
+import java.util.Properties
 import kotlin.text.RegexOption.IGNORE_CASE
 
 plugins {
@@ -28,9 +30,22 @@ idea {
 
 val globalApplicationId = "org.autojs.autojs6"
 
-// AutoDroid Runner：独立 applicationId，可与官方 AutoJs6 共存安装；
+// AutoDroid：独立 applicationId，可与官方 AutoJs6 共存安装；
 // namespace 保持 org.autojs.autojs6 不变（最小 diff，代码零改动）。
 val runnerApplicationId = "com.autodroid.runner"
+
+// AutoDroid：默认平台地址（可在 App 设置页随时修改）。
+// 取值顺序：gradle 属性 / local.properties 的 autodroid.server > 占位默认值，
+// 这样本机内网地址不会进入仓库（local.properties 已被 .gitignore 忽略）。
+val autodroidDefaultServer: String = run {
+    val localProps = Properties()
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localPropsFile.inputStream().use { stream: InputStream -> localProps.load(stream) }
+    }
+    val fromGradleProp: String? = project.findProperty("autodroid.server") as String?
+    fromGradleProp ?: localProps.getProperty("autodroid.server") ?: "http://127.0.0.1:8000"
+}
 
 val flavorDimension = "channel"
 val flavorNameApp = "app"
@@ -455,7 +470,7 @@ dependencies /* Archived */ {
 }
 
 dependencies /* Reserved for auto append by IDE */ {
-    // AutoDroid Runner：登录态加密存储
+    // AutoDroid：登录态加密存储
     implementation("androidx.security:security-crypto:1.0.0")
 }
 
@@ -501,13 +516,13 @@ android {
             versionName = versions.appVersionName
             buildConfigField("String", "CHANNEL", "\"$flavorNameApp\"")
             buildConfigField("boolean", "is${flavorNameInrt.uppercaseFirstChar()}", "false")
-            // AutoDroid Runner：默认平台地址（可在 App 设置页修改）
-            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"http://127.0.0.1:8000\"")
+            // AutoDroid：默认平台地址（可在 App 设置页修改）
+            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"$autodroidDefaultServer\"")
             manifestPlaceholders.putAll(
                 mapOf(
                     "CHANNEL" to flavorNameApp,
-                    "appName" to "AutoDroid Runner",
-                    // AutoDroid Runner：主入口改为 org.autojs.autodroid.ui.MainActivity，
+                    "appName" to "AutoDroid",
+                    // AutoDroid：主入口改为 org.autojs.autodroid.ui.MainActivity，
                     // 原 AutoJs6 启动别名不再作为桌面图标（应用内保留控制台入口）。
                     "intentCategory" to "android.intent.category.DEFAULT",
                     "intentCategoryInrt" to "android.intent.category.DEFAULT",
@@ -529,8 +544,8 @@ android {
 
             buildConfigField("String", "CHANNEL", "\"$flavorNameInrt\"")
             buildConfigField("boolean", "is${flavorNameInrt.uppercaseFirstChar()}", "true")
-            // AutoDroid Runner：默认平台地址（可在 App 设置页修改）
-            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"http://127.0.0.1:8000\"")
+            // AutoDroid：默认平台地址（可在 App 设置页修改）
+            buildConfigField("String", "AUTODROID_DEFAULT_SERVER", "\"$autodroidDefaultServer\"")
 
             manifestPlaceholders.putAll(
                 mapOf(

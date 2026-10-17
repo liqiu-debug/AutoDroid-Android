@@ -27,7 +27,7 @@
     <!--  ! Target API == 29: WRT + [ MSV<29> ] / WRT + [ MSV<28> ] + LGC -->
     <!--  ! Target API >= 30: WRT + [ MSV<29> ] + LGC  + MAN -->
 
-    <!-- AutoDroid Runner：自定义权限改到独立命名空间，避免与官方 AutoJs6 共存安装时签名级权限冲突 -->
+    <!-- AutoDroid：自定义权限改到独立命名空间，避免与官方 AutoJs6 共存安装时签名级权限冲突 -->
     <permission
         android:name="com.autodroid.runner.permission.PLUGIN"
         android:protectionLevel="signature" />
@@ -97,6 +97,9 @@
 
     <!-- To allow posting notifications on Android 13. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- 电池优化白名单：设置页「加入白名单」直接拉起系统授权弹窗所需 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
@@ -234,12 +237,12 @@
                 android:resource="@xml/app_shortcuts" />
         </activity>
 
-        <!-- AutoDroid Runner 平台客户端入口（唯一桌面图标） -->
+        <!-- AutoDroid 平台客户端入口（唯一桌面图标） -->
         <activity
             android:name="org.autojs.autodroid.ui.MainActivity"
             android:exported="true"
-            android:label="AutoDroid Runner"
-            android:theme="@style/AppTheme">
+            android:label="AutoDroid"
+            android:theme="@style/AdTheme">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -250,59 +253,59 @@
         <activity
             android:name="org.autojs.autodroid.ui.LoginActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.CaseListActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.SettingsActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.RunActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ReportListActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ReportDetailActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ScenarioListActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.CaseDetailActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ScenarioDetailActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ScheduleListActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
         <activity
             android:name="org.autojs.autodroid.ui.ScheduleEditActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AdTheme" />
 
-        <!-- AutoDroid Runner 定时任务：闹钟触发 + 开机重排 + 前台执行服务 -->
+        <!-- AutoDroid 定时任务：闹钟触发 + 开机重排 + 前台执行服务 -->
         <receiver
             android:name="org.autojs.autodroid.schedule.ScheduleReceiver"
             android:exported="false" />
