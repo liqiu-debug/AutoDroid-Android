@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AutoDroid Runner 设计系统：配色 -->
+<!-- AutoDroid 设计系统：配色 -->
 <resources>
     <color name="ad_primary">#1677FF</color>
     <color name="ad_primary_dark">#0E5AD9</color>

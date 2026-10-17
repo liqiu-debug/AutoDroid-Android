@@ -15,6 +15,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import org.autojs.autodroid.schedule.AppDatabase
 import org.autojs.autodroid.schedule.ScheduleManager
 import org.autojs.autodroid.schedule.ScheduledRun
@@ -31,13 +33,18 @@ class ScheduleListActivity : AppCompatActivity() {
     private lateinit var adapter: ScheduleAdapter
     private lateinit var statusText: TextView
     private lateinit var exactHint: Button
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_schedule_list)
 
+        AdHeader.bind(this, "定时任务", showBack = false)
+        AdBottomNav.bind(this, "schedules")
         statusText = findViewById(R.id.text_status)
-        exactHint = findViewById(R.id.btn_exact_alarm)
+        swipeRefresh = findViewById(R.id.swipe_refresh)
+        swipeRefresh.setColorSchemeColors(ContextCompat.getColor(this, R.color.ad_primary))
+        swipeRefresh.setOnRefreshListener { reload() }
 
         adapter = ScheduleAdapter { run, enabled ->
             AppDatabase.io.execute {
@@ -61,15 +68,36 @@ class ScheduleListActivity : AppCompatActivity() {
 
         val listView = findViewById<ListView>(R.id.list_schedules)
         listView.adapter = adapter
+        PullDownMoveHelper.attach(swipeRefresh, listView)
+
+        // 顶部区（新建入口）作为列表 header：下拉刷新与列表滚动时一起移动
+        val header = layoutInflater.inflate(R.layout.view_schedule_list_header, listView, false)
+        listView.addHeaderView(header, null, false)
+        exactHint = header.findViewById(R.id.btn_exact_alarm)
+        header.findViewById<Button>(R.id.btn_add).setOnClickListener {
+            startActivity(Intent(this, ScheduleEditActivity::class.java))
+        }
+        exactHint.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                try {
+                    startActivity(
+                        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    )
+                } catch (e: Exception) {
+                    toast("请在系统设置 → 应用 → 特殊权限中允许精确闹钟")
+                }
+            }
+        }
+
         listView.setOnItemClickListener { _, _, position, _ ->
-            val run = adapter.getItem(position)
+            val run = adapter.getItem(position - listView.headerViewsCount)
             startActivity(
                 Intent(this, ScheduleEditActivity::class.java)
                     .putExtra(ScheduleEditActivity.EXTRA_SCHEDULE_ID, run.id)
             )
         }
         listView.setOnItemLongClickListener { _, _, position, _ ->
-            val run = adapter.getItem(position)
+            val run = adapter.getItem(position - listView.headerViewsCount)
             AlertDialog.Builder(this)
                 .setTitle("删除定时任务")
                 .setMessage("确定删除「${run.name}」？")
@@ -84,22 +112,6 @@ class ScheduleListActivity : AppCompatActivity() {
                 .show()
             true
         }
-
-        findViewById<Button>(R.id.btn_add).setOnClickListener {
-            startActivity(Intent(this, ScheduleEditActivity::class.java))
-        }
-
-        exactHint.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                try {
-                    startActivity(
-                        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                    )
-                } catch (e: Exception) {
-                    toast("请在系统设置 → 应用 → 特殊权限中允许精确闹钟")
-                }
-            }
-        }
     }
 
     override fun onResume() {
@@ -113,8 +125,9 @@ class ScheduleListActivity : AppCompatActivity() {
         AppDatabase.io.execute {
             val runs = AppDatabase.get(this).scheduledRuns().all()
             runOnUiThread {
+                if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
                 adapter.setItems(runs)
-                statusText.text = "共 ${runs.size} 个定时任务（长按删除）"
+                statusText.text = if (runs.isEmpty()) "暂无定时任务，点上方按钮新建" else "共 ${runs.size} 个定时任务（长按删除）"
             }
         }
     }

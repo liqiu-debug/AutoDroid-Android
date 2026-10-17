@@ -26,8 +26,7 @@ class ReportDetailActivity : AppCompatActivity() {
         setContentView(R.layout.activity_report_detail)
 
         val executionId = intent.getLongExtra(EXTRA_EXECUTION_ID, -1L)
-        findViewById<TextView>(R.id.text_title).text =
-            intent.getStringExtra(EXTRA_TITLE) ?: "执行报告"
+        AdHeader.bind(this, intent.getStringExtra(EXTRA_TITLE) ?: "执行报告")
 
         val statusText = findViewById<TextView>(R.id.text_status)
         val webView = findViewById<WebView>(R.id.web_report)

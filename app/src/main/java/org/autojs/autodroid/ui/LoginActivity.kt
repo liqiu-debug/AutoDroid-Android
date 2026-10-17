@@ -85,7 +85,7 @@ class LoginActivity : AppCompatActivity() {
             })
     }
 
-    /** 登录成功后向平台注册本机（设备中心可见 autojs6:<androidId>）；失败不影响使用。 */
+    /** 登录成功后向平台注册本机（设备中心可见）；失败不影响使用。 */
     private fun registerDevice() {
         try {
             val payload = DeviceRegisterRequest(

@@ -6,69 +6,35 @@
     android:background="@color/ad_bg"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/ad_bg_header"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp">
+    <include layout="@layout/ad_header" />
 
-        <TextView
-            style="@style/AdHeaderTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="场景" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="12dp"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/input_keyword"
-            style="@style/AdInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="搜索场景名称"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:maxLines="1" />
-
-        <Button
-            android:id="@+id/btn_search"
-            style="@style/AdButtonPrimary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:minHeight="44dp"
-            android:text="搜索" />
-    </LinearLayout>
-
-    <ListView
-        android:id="@+id/list_scenarios"
+    <!-- 顶部区（搜索）作为列表 header，整体随下拉刷新移动 -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="4dp"
-        android:layout_weight="1"
-        android:divider="@null"
-        android:dividerHeight="0dp"
-        android:scrollbars="none" />
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/list_scenarios"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:overScrollMode="never"
+            android:paddingBottom="8dp"
+            android:scrollbars="none" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <TextView
         android:id="@+id/text_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="6dp"
         android:textColor="@color/ad_text_tertiary"
         android:textSize="12sp" />
+
+    <include layout="@layout/ad_bottom_nav" />
 </LinearLayout>

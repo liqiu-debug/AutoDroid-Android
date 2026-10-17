@@ -30,7 +30,7 @@ class CaseDetailActivity : AppCompatActivity() {
 
         val caseId = intent.getIntExtra(EXTRA_CASE_ID, -1)
         val caseName = intent.getStringExtra(EXTRA_CASE_NAME) ?: "用例"
-        findViewById<TextView>(R.id.text_title).text = caseName
+        AdHeader.bind(this, caseName)
 
         val metaText = findViewById<TextView>(R.id.text_meta)
         val adapter = StepAdapter()

@@ -1,38 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AutoDroid Runner 设计系统：通用样式 -->
+<!-- AutoDroid 设计系统 v2：通用样式（白底浅灰、蓝色只用于按钮与选中态） -->
 <resources>
-    <!-- 主按钮 -->
+    <!-- 页面主操作按钮（登录/运行/保存） -->
     <style name="AdButtonPrimary" parent="android:Widget.Material.Button">
         <item name="android:background">@drawable/ad_btn_primary</item>
         <item name="android:textColor">@color/ad_surface</item>
-        <item name="android:textSize">15sp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:minHeight">46dp</item>
-        <item name="android:paddingStart">16dp</item>
-        <item name="android:paddingEnd">16dp</item>
-        <item name="android:stateListAnimator">@null</item>
-    </style>
-
-    <!-- 头部栏按钮（浅色文字） -->
-    <style name="AdButtonGhost" parent="android:Widget.Material.Button.Borderless">
-        <item name="android:background">@drawable/ad_btn_ghost</item>
-        <item name="android:textColor">@color/ad_surface</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">44dp</item>
         <item name="android:minWidth">0dp</item>
-        <item name="android:minHeight">36dp</item>
-        <item name="android:paddingStart">10dp</item>
-        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
         <item name="android:stateListAnimator">@null</item>
+        <item name="android:letterSpacing">0.02</item>
     </style>
 
-    <!-- 次级按钮（白底描边，用于表单内选择类操作） -->
+    <!-- 次级按钮（表单选择类） -->
     <style name="AdButtonSecondary" parent="android:Widget.Material.Button">
         <item name="android:background">@drawable/ad_bg_input</item>
         <item name="android:textColor">@color/ad_text</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:minHeight">44dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- 列表行内小按钮（运行） -->
+    <style name="AdButtonSmall" parent="android:Widget.Material.Button">
+        <item name="android:background">@drawable/ad_btn_primary</item>
+        <item name="android:textColor">@color/ad_surface</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">32dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- 可点选标签（重复策略 / 星期） -->
+    <style name="AdChipChoice">
+        <item name="android:background">@drawable/ad_chip_selectable</item>
+        <item name="android:textColor">@color/ad_chip_text_color</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">38dp</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingEnd">6dp</item>
+    </style>
+
+    <!-- 弹窗文字按钮（取消/确定） -->
+    <style name="AdButtonGhost" parent="android:Widget.Material.Button">
+        <item name="android:background">@drawable/ad_btn_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
         <item name="android:stateListAnimator">@null</item>
     </style>
 
@@ -41,11 +69,11 @@
         <item name="android:background">@drawable/ad_bg_input</item>
         <item name="android:paddingStart">14dp</item>
         <item name="android:paddingEnd">14dp</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
+        <item name="android:paddingTop">11dp</item>
+        <item name="android:paddingBottom">11dp</item>
         <item name="android:textColor">@color/ad_text</item>
         <item name="android:textColorHint">@color/ad_text_tertiary</item>
-        <item name="android:textSize">15sp</item>
+        <item name="android:textSize">14sp</item>
     </style>
 
     <!-- 卡片容器 -->
@@ -57,11 +85,13 @@
         <item name="android:layout_marginTop">10dp</item>
     </style>
 
-    <!-- 页面标题（头部栏内） -->
+    <!-- 页面标题（白底头部内） -->
     <style name="AdHeaderTitle">
-        <item name="android:textColor">@color/ad_surface</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/ad_text</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
     </style>
 
     <!-- 分组标题 -->

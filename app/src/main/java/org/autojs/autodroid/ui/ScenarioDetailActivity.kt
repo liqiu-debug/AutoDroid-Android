@@ -31,7 +31,7 @@ class ScenarioDetailActivity : AppCompatActivity() {
 
         val scenarioId = intent.getIntExtra(EXTRA_SCENARIO_ID, -1)
         val scenarioName = intent.getStringExtra(EXTRA_SCENARIO_NAME) ?: "场景"
-        findViewById<TextView>(R.id.text_title).text = scenarioName
+        AdHeader.bind(this, scenarioName)
         metaText = findViewById(R.id.text_meta)
 
         adapter = CaseAdapter(this)

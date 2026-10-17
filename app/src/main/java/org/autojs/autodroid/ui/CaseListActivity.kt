@@ -2,20 +2,20 @@ package org.autojs.autodroid.ui
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
-import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.CaseItem
@@ -28,24 +28,30 @@ import retrofit2.Callback
 import retrofit2.Response
 
 /**
- * 用例列表：文件夹筛选 + 关键字搜索 + 列表（点击运行，运行桥下个增量接入）。
+ * 用例列表：目录选择（弹窗目录树）+ 关键字搜索 + 下拉刷新；
+ * 行内「运行」按钮直接执行，点击行进入用例详情。
  */
 class CaseListActivity : AppCompatActivity() {
 
     private lateinit var adapter: CaseAdapter
     private lateinit var statusText: TextView
-    private lateinit var spinner: Spinner
+    private lateinit var folderText: TextView
     private lateinit var keywordInput: EditText
-    private var folderChoices: MutableList<Pair<String, Int?>> = mutableListOf("全部用例" to null)
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+    private var folderChoices: List<FolderChoice> = emptyList()
     private var selectedFolderId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_case_list)
 
+        AdHeader.bind(this, "用例", showBack = false)
+        AdBottomNav.bind(this, "cases")
+        requestNotificationPermissionIfNeeded()
+
         statusText = findViewById(R.id.text_status)
-        spinner = findViewById(R.id.spinner_folder)
-        keywordInput = findViewById(R.id.input_keyword)
+        swipeRefresh = findViewById(R.id.swipe_refresh)
+        swipeRefresh.setColorSchemeColors(ContextCompat.getColor(this, R.color.ad_primary))
 
         adapter = CaseAdapter(this, showRunButton = true) { item ->
             startActivity(
@@ -57,8 +63,17 @@ class CaseListActivity : AppCompatActivity() {
         }
         val listView = findViewById<ListView>(R.id.list_cases)
         listView.adapter = adapter
+
+        // 顶部区（搜索 + 目录）作为列表 header：下拉刷新与列表滚动时一起移动
+        val header = layoutInflater.inflate(R.layout.view_case_list_header, listView, false)
+        listView.addHeaderView(header, null, false)
+        keywordInput = header.findViewById(R.id.input_keyword)
+        folderText = header.findViewById(R.id.text_folder)
+        header.findViewById<Button>(R.id.btn_search).setOnClickListener { loadCases() }
+        header.findViewById<View>(R.id.row_folder).setOnClickListener { showFolderDialog() }
+
         listView.setOnItemClickListener { _, _, position, _ ->
-            val item = adapter.getItem(position)
+            val item = adapter.getItem(position - listView.headerViewsCount)
             startActivity(
                 Intent(this, CaseDetailActivity::class.java)
                     .putExtra(CaseDetailActivity.EXTRA_CASE_ID, item.id)
@@ -66,89 +81,162 @@ class CaseListActivity : AppCompatActivity() {
             )
         }
 
-        findViewById<Button>(R.id.btn_search).setOnClickListener { loadCases() }
-        findViewById<Button>(R.id.btn_settings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
+        swipeRefresh.setOnRefreshListener {
+            loadFolders()
+            loadCases()
         }
-        findViewById<Button>(R.id.btn_scenarios).setOnClickListener {
-            startActivity(Intent(this, ScenarioListActivity::class.java))
-        }
-        findViewById<Button>(R.id.btn_reports).setOnClickListener {
-            startActivity(Intent(this, ReportListActivity::class.java))
-        }
-        findViewById<Button>(R.id.btn_schedules).setOnClickListener {
-            startActivity(Intent(this, ScheduleListActivity::class.java))
-        }
-
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedFolderId = folderChoices.getOrNull(position)?.second
-                loadCases()
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-        }
+        PullDownMoveHelper.attach(swipeRefresh, listView)
 
         loadFolders()
         loadCases()
+        window.decorView.post { checkAccessibilityGuide() }
+    }
+
+    /** 每次打开 App 检查无障碍服务；未开启（或已开启但未运行）时弹窗引导。 */
+    private fun checkAccessibilityGuide() {
+        if (isFinishing || isDestroyed) return
+        val tool = org.autojs.autojs.core.accessibility.AccessibilityTool(this)
+        if (runCatching { tool.isRunning() }.getOrDefault(false)) return
+        val hasService = runCatching { tool.hasService() }.getOrDefault(false)
+        AdGuideDialog.show(
+            this,
+            title = "无障碍服务未开启",
+            message = if (hasService) {
+                "检测到无障碍服务已开启但未运行（部分机型常见）。请到「系统设置 → 无障碍」里关闭再打开 AutoDroid 的开关；若仍无效，重启一次设备。"
+            } else {
+                "AutoDroid 需要无障碍服务才能执行用例 / 场景。请到「系统设置 → 无障碍」中找到 AutoDroid 并开启。"
+            },
+            positiveText = "去开启",
+        ) {
+            runCatching {
+                startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+        }
     }
 
     private fun api() = AutoDroidApi.service(Session.serverUrl)
 
+    private fun stopRefreshing() {
+        if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
+    }
+
+    // ------------------------------------------------------------------ //
+    //  目录选择
+    // ------------------------------------------------------------------ //
+    private data class FolderChoice(val label: String, val folderId: Int?, val count: Int)
+
     private fun loadFolders() {
         api().folderTree().enqueue(object : Callback<FolderTreeResponse> {
             override fun onResponse(call: Call<FolderTreeResponse>, response: Response<FolderTreeResponse>) {
-                val tree = response.body()?.tree ?: return
-                val choices = mutableListOf<Pair<String, Int?>>("全部用例" to null)
-                flattenFolders(tree, 0, choices)
-                folderChoices = choices
-                spinner.adapter = ArrayAdapter(
-                    this@CaseListActivity,
-                    android.R.layout.simple_spinner_dropdown_item,
-                    choices.map { it.first },
-                )
+                val body = response.body() ?: return
+                val choices = mutableListOf<FolderChoice>()
+                flattenFolders(body.tree, 0, choices)
+                // 注意: 树内只包含已归目录的用例, "全部用例" 不带计数以免误导
+                folderChoices = listOf(FolderChoice("全部用例", null, 0)) + choices
+                stopRefreshing()
             }
 
             override fun onFailure(call: Call<FolderTreeResponse>, t: Throwable) {
-                statusText.text = "目录加载失败：${t.message}"
+                stopRefreshing()
             }
         })
     }
 
-    private fun flattenFolders(nodes: List<FolderNode>, depth: Int, out: MutableList<Pair<String, Int?>>) {
+    /** 递归展平目录树（父目录先出现、子目录缩进），返回该子树下的用例数。 */
+    private fun flattenFolders(nodes: List<FolderNode>, depth: Int, out: MutableList<FolderChoice>): Int {
+        var total = 0
         for (node in nodes) {
             if (node.type == "folder") {
-                val rawId = node.id?.removePrefix("folder-")?.toIntOrNull()
-                val indent = "　".repeat(depth)
-                out.add("$indent${node.name ?: "未命名目录"}" to rawId)
-                node.children?.let { flattenFolders(it, depth + 1, out) }
+                val index = out.size
+                out.add(FolderChoice("", node.id?.removePrefix("folder-")?.toIntOrNull(), 0))
+                val childCount = node.children?.let { flattenFolders(it, depth + 1, out) } ?: 0
+                out[index] = out[index].copy(
+                    label = "　".repeat(depth) + (node.name ?: "未命名目录"),
+                    count = childCount,
+                )
+                total += childCount
+            } else if (node.is_leaf == true) {
+                total += 1
             }
+        }
+        return total
+    }
+
+    /** 目录选择：与定时任务的目标选择同一套弹窗（圆角卡片 + 搜索 + 当前选中高亮）。 */
+    private fun showFolderDialog() {
+        PickerDialog.show(
+            this,
+            title = "选择目录",
+            emptyText = if (folderChoices.isEmpty()) "目录加载失败，可下拉刷新重试" else "没有匹配的目录",
+            options = folderChoices.map { choice ->
+                val selected = choice.folderId == selectedFolderId
+                PickerDialog.Option(
+                    key = choice.folderId,
+                    name = choice.label.trim(),
+                    badge = when {
+                        selected -> "当前"
+                        choice.count > 0 -> "${choice.count} 个"
+                        else -> null
+                    },
+                    highlight = selected,
+                    searchKey = choice.folderId?.toString().orEmpty(),
+                )
+            },
+        ) { picked ->
+            selectedFolderId = picked.key
+            folderText.text = "目录：${picked.name}"
+            loadCases()
         }
     }
 
+    // ------------------------------------------------------------------ //
+    //  用例列表
+    // ------------------------------------------------------------------ //
     private fun loadCases() {
         statusText.text = "加载中…"
         val keyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
         api().listCases(keyword = keyword, folderId = selectedFolderId)
             .enqueue(object : Callback<PaginatedCases> {
                 override fun onResponse(call: Call<PaginatedCases>, response: Response<PaginatedCases>) {
+                    stopRefreshing()
                     val body = response.body()
                     if (body == null) {
                         statusText.text = "加载失败（HTTP ${response.code()}）"
                         return
                     }
                     adapter.setItems(body.items)
-                    statusText.text = "共 ${body.total} 条用例"
+                    statusText.text = if (body.items.isEmpty()) {
+                        "暂无用例" + if (selectedFolderId != null) "（当前目录）" else ""
+                    } else {
+                        "共 ${body.total} 条用例"
+                    }
                 }
 
                 override fun onFailure(call: Call<PaginatedCases>, t: Throwable) {
+                    stopRefreshing()
                     statusText.text = "加载失败：${t.message}"
                 }
             })
     }
+
+    /** Android 13+ 需运行时通知权限（运行完成通知、定时任务通知依赖）。 */
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                REQUEST_CODE_NOTIFICATIONS,
+            )
+        }
+    }
+
+    companion object {
+        private const val REQUEST_CODE_NOTIFICATIONS = 2001
+    }
 }
 
-/** 用例列表适配器（名称 + 状态/描述副标题）。 */
+/** 用例列表适配器（名称 + 状态徽标 + 行内运行按钮）。 */
 class CaseAdapter(
     private val context: Context,
     private val showRunButton: Boolean = true,
@@ -161,25 +249,6 @@ class CaseAdapter(
         items = newItems
         notifyDataSetChanged()
     }
-    private fun applyStatusBadge(view: View, status: String?) {
-        val badge = view.findViewById<TextView>(R.id.text_badge) ?: return
-        if (status.isNullOrBlank()) {
-            badge.visibility = View.GONE
-            return
-        }
-        badge.visibility = View.VISIBLE
-        val (bgRes, colorRes) = when (status.uppercase()) {
-            "PASS" -> R.drawable.ad_chip_pass to R.color.ad_pass
-            "FAIL", "FAILED", "ERROR" -> R.drawable.ad_chip_fail to R.color.ad_fail
-            "WARNING" -> R.drawable.ad_chip_warn to R.color.ad_warn
-            "RUNNING" -> R.drawable.ad_chip_idle to R.color.ad_primary
-            else -> R.drawable.ad_chip_idle to R.color.ad_idle
-        }
-        badge.setBackgroundResource(bgRes)
-        badge.setTextColor(androidx.core.content.ContextCompat.getColor(view.context, colorRes))
-        badge.text = status
-    }
-
 
     override fun getCount(): Int = items.size
     override fun getItem(position: Int): CaseItem = items[position]
@@ -205,5 +274,24 @@ class CaseAdapter(
             runButton.visibility = View.GONE
         }
         return view
+    }
+
+    private fun applyStatusBadge(view: View, status: String?) {
+        val badge = view.findViewById<TextView>(R.id.text_badge) ?: return
+        if (status.isNullOrBlank()) {
+            badge.visibility = View.GONE
+            return
+        }
+        badge.visibility = View.VISIBLE
+        val (bgRes, colorRes) = when (status.uppercase()) {
+            "PASS" -> R.drawable.ad_chip_pass to R.color.ad_pass
+            "FAIL", "FAILED", "ERROR" -> R.drawable.ad_chip_fail to R.color.ad_fail
+            "WARNING" -> R.drawable.ad_chip_warn to R.color.ad_warn
+            "RUNNING" -> R.drawable.ad_chip_idle to R.color.ad_primary
+            else -> R.drawable.ad_chip_idle to R.color.ad_idle
+        }
+        badge.setBackgroundResource(bgRes)
+        badge.setTextColor(ContextCompat.getColor(view.context, colorRes))
+        badge.text = status
     }
 }

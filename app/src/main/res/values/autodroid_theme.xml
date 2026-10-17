@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AutoDroid 页面主题：白底头部配深色状态栏图标 -->
+    <style name="AdTheme" parent="@style/AppTheme">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/ad_bg</item>
+        <item name="android:statusBarColor">@color/ad_surface</item>
+    </style>
+</resources>

@@ -12,6 +12,8 @@ import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.PaginatedScenarios
@@ -29,13 +31,18 @@ class ScenarioListActivity : AppCompatActivity() {
     private lateinit var adapter: ScenarioAdapter
     private lateinit var statusText: TextView
     private lateinit var keywordInput: EditText
+    private lateinit var swipeRefresh: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scenario_list)
 
+        AdHeader.bind(this, "场景", showBack = false)
+        AdBottomNav.bind(this, "scenarios")
         statusText = findViewById(R.id.text_status)
-        keywordInput = findViewById(R.id.input_keyword)
+        val swipe = findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipe.setColorSchemeColors(ContextCompat.getColor(this, R.color.ad_primary))
+        swipe.setOnRefreshListener { load() }
         adapter = ScenarioAdapter(this) { item ->
             startActivity(
                 Intent(this, RunActivity::class.java)
@@ -47,8 +54,15 @@ class ScenarioListActivity : AppCompatActivity() {
 
         val listView = findViewById<ListView>(R.id.list_scenarios)
         listView.adapter = adapter
+
+        // 搜索区作为列表 header：下拉刷新与列表滚动时一起移动
+        val header = layoutInflater.inflate(R.layout.view_scenario_list_header, listView, false)
+        listView.addHeaderView(header, null, false)
+        keywordInput = header.findViewById(R.id.input_keyword)
+        header.findViewById<Button>(R.id.btn_search).setOnClickListener { load() }
+
         listView.setOnItemClickListener { _, _, position, _ ->
-            val item = adapter.getItem(position)
+            val item = adapter.getItem(position - listView.headerViewsCount)
             startActivity(
                 Intent(this, ScenarioDetailActivity::class.java)
                     .putExtra(ScenarioDetailActivity.EXTRA_SCENARIO_ID, item.id)
@@ -56,8 +70,9 @@ class ScenarioListActivity : AppCompatActivity() {
             )
         }
 
-        findViewById<Button>(R.id.btn_search).setOnClickListener { load() }
+        PullDownMoveHelper.attach(swipe, listView)
         load()
+        swipeRefresh = swipe
     }
 
     private fun load() {
@@ -67,16 +82,18 @@ class ScenarioListActivity : AppCompatActivity() {
             .listScenarios(keyword = keyword)
             .enqueue(object : Callback<PaginatedScenarios> {
                 override fun onResponse(call: Call<PaginatedScenarios>, response: Response<PaginatedScenarios>) {
+                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
                     val body = response.body()
                     if (body == null) {
                         statusText.text = "加载失败（HTTP ${response.code()}）"
                         return
                     }
                     adapter.setItems(body.items)
-                    statusText.text = "共 ${body.total} 个场景"
+                    statusText.text = if (body.items.isEmpty()) "暂无场景" else "共 ${body.total} 个场景"
                 }
 
                 override fun onFailure(call: Call<PaginatedScenarios>, t: Throwable) {
+                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
                     statusText.text = "加载失败：${t.message}"
                 }
             })

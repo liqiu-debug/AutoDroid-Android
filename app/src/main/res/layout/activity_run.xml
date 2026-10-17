@@ -6,27 +6,7 @@
     android:background="@color/ad_bg"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/ad_bg_header"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp">
-
-        <TextView
-            android:id="@+id/text_title"
-            style="@style/AdHeaderTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="运行" />
-    </LinearLayout>
+    <include layout="@layout/ad_header" />
 
     <LinearLayout
         style="@style/AdCard"
@@ -42,6 +22,16 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
+        <ProgressBar
+            android:id="@+id/progress_run"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="10dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/ad_primary"
+            android:visibility="gone" />
+
         <Switch
             android:id="@+id/switch_notify"
             android:layout_width="match_parent"
@@ -55,7 +45,7 @@
             android:id="@+id/btn_run"
             style="@style/AdButtonPrimary"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="44dp"
             android:layout_marginTop="12dp"
             android:text="重新运行" />
     </LinearLayout>
@@ -74,7 +64,7 @@
         android:id="@+id/text_result"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp"
+        android:padding="14dp"
         android:textColor="@color/ad_text_secondary"
         android:textSize="12sp" />
 </LinearLayout>

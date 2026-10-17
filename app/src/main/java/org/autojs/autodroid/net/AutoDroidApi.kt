@@ -71,7 +71,14 @@ data class FolderNode(
     val children: List<FolderNode>? = null,
 )
 
-data class FolderTreeResponse(val tree: List<FolderNode> = emptyList(), val all_cases: List<CaseItem> = emptyList())
+/**
+ * 目录树响应。
+ *
+ * 注意：平台响应里的 all_cases 节点 id 为字符串（"case-1"），与本模型的 Int id 不兼容，
+ * 整体解析会失败（JsonSyntaxException），因此不声明该字段（Gson 会忽略未声明字段）；
+ * 目录内用例数由 tree 的叶子节点递归统计。
+ */
+data class FolderTreeResponse(val tree: List<FolderNode> = emptyList())
 
 data class DeviceRegisterResponse(val device_serial: String? = null)
 
