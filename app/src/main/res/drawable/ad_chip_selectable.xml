@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 可点选标签（重复策略 / 星期）：选中浅蓝底，未选浅灰底 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#E8F0FF" />
+            <corners android:radius="999dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ad_input_bg" />
+            <corners android:radius="999dp" />
+        </shape>
+    </item>
+</selector>

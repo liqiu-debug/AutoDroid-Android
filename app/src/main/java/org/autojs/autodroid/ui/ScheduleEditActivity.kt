@@ -1,21 +1,18 @@
 package org.autojs.autodroid.ui
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioGroup
-import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
+import org.autojs.autodroid.net.PaginatedCases
+import org.autojs.autodroid.net.PaginatedScenarios
 import org.autojs.autodroid.schedule.AppDatabase
 import org.autojs.autodroid.schedule.ScheduleManager
 import org.autojs.autodroid.schedule.ScheduledRun
@@ -43,25 +40,31 @@ class ScheduleEditActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_schedule_edit)
 
+        AdHeader.bind(this, if (editingId > 0) "编辑定时任务" else "新建定时任务")
         editingId = intent.getLongExtra(EXTRA_SCHEDULE_ID, 0L)
 
         val nameInput = findViewById<EditText>(R.id.input_name)
         val kindGroup = findViewById<RadioGroup>(R.id.radio_kind)
         val targetButton = findViewById<Button>(R.id.btn_target)
-        val repeatSpinner = findViewById<Spinner>(R.id.spinner_repeat)
         val timeButton = findViewById<Button>(R.id.btn_time)
-        val weekdaySpinner = findViewById<Spinner>(R.id.spinner_weekday)
         val intervalInput = findViewById<EditText>(R.id.input_interval)
         val onceButton = findViewById<Button>(R.id.btn_once)
         val notifySwitch = findViewById<Switch>(R.id.switch_notify)
 
-        val repeatLabels = listOf("每天", "每周", "每隔 N 分钟", "单次")
-        val repeatValues = listOf("DAILY", "WEEKLY", "INTERVAL", "ONCE")
-        repeatSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, repeatLabels)
-        weekdaySpinner.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            listOf("周一", "周二", "周三", "周四", "周五", "周六", "周日"),
+        val repeatChips = listOf(
+            "DAILY" to findViewById<TextView>(R.id.chip_daily),
+            "WEEKLY" to findViewById<TextView>(R.id.chip_weekly),
+            "INTERVAL" to findViewById<TextView>(R.id.chip_interval),
+            "ONCE" to findViewById<TextView>(R.id.chip_once),
+        )
+        val weekdayChips = listOf(
+            findViewById<TextView>(R.id.chip_wd_1),
+            findViewById<TextView>(R.id.chip_wd_2),
+            findViewById<TextView>(R.id.chip_wd_3),
+            findViewById<TextView>(R.id.chip_wd_4),
+            findViewById<TextView>(R.id.chip_wd_5),
+            findViewById<TextView>(R.id.chip_wd_6),
+            findViewById<TextView>(R.id.chip_wd_7),
         )
 
         val rowTime = findViewById<View>(R.id.row_time)
@@ -75,7 +78,30 @@ class ScheduleEditActivity : AppCompatActivity() {
             rowInterval.visibility = if (repeatType == "INTERVAL") View.VISIBLE else View.GONE
             rowOnce.visibility = if (repeatType == "ONCE") View.VISIBLE else View.GONE
         }
-        refreshRepeatRows()
+
+        fun refreshRepeatChips() {
+            repeatChips.forEach { (value, chip) -> chip.isSelected = value == repeatType }
+            refreshRepeatRows()
+        }
+
+        fun refreshWeekdayChips() {
+            weekdayChips.forEachIndexed { index, chip -> chip.isSelected = index == weekday - 1 }
+        }
+
+        repeatChips.forEach { (value, chip) ->
+            chip.setOnClickListener {
+                repeatType = value
+                refreshRepeatChips()
+            }
+        }
+        weekdayChips.forEachIndexed { index, chip ->
+            chip.setOnClickListener {
+                weekday = index + 1
+                refreshWeekdayChips()
+            }
+        }
+        refreshRepeatChips()
+        refreshWeekdayChips()
 
         fun refreshLabels() {
             timeButton.text = "时间：%02d:%02d".format(timeOfDayMinutes / 60, timeOfDayMinutes % 60)
@@ -102,63 +128,28 @@ class ScheduleEditActivity : AppCompatActivity() {
 
         targetButton.setOnClickListener { pickTarget { id, name -> targetId = id; targetName = name; refreshLabels() } }
 
-        repeatSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                repeatType = repeatValues[position]
-                refreshRepeatRows()
-            }
-
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) = Unit
-        }
-
         timeButton.setOnClickListener {
-            TimePickerDialog(
-                this,
-                { _, hour, minute ->
-                    timeOfDayMinutes = hour * 60 + minute
-                    refreshLabels()
-                },
-                timeOfDayMinutes / 60,
-                timeOfDayMinutes % 60,
-                true,
-            ).show()
-        }
-
-        weekdaySpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                weekday = position + 1
+            showTimePickerDialog(timeOfDayMinutes) { minutes ->
+                timeOfDayMinutes = minutes
+                refreshLabels()
             }
-
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) = Unit
         }
 
         onceButton.setOnClickListener {
-            val cal = Calendar.getInstance()
-            if (onceAtMillis > 0) cal.timeInMillis = onceAtMillis
-            DatePickerDialog(
-                this,
-                { _, year, month, day ->
-                    val picked = Calendar.getInstance().apply {
-                        set(year, month, day, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    TimePickerDialog(
-                        this,
-                        { _, hour, minute ->
-                            picked.set(Calendar.HOUR_OF_DAY, hour)
-                            picked.set(Calendar.MINUTE, minute)
-                            onceAtMillis = picked.timeInMillis
-                            refreshLabels()
-                        },
-                        cal.get(Calendar.HOUR_OF_DAY),
-                        cal.get(Calendar.MINUTE),
-                        true,
-                    ).show()
-                },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH),
-            ).show()
+            val base = if (onceAtMillis > 0) onceAtMillis else System.currentTimeMillis() + 60 * 60 * 1000
+            val cal = Calendar.getInstance().apply { timeInMillis = base }
+            showDatePickerDialog(base) { year, month, day ->
+                val picked = Calendar.getInstance().apply {
+                    set(year, month, day, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                showTimePickerDialog(cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)) { minutes ->
+                    picked.set(Calendar.HOUR_OF_DAY, minutes / 60)
+                    picked.set(Calendar.MINUTE, minutes % 60)
+                    onceAtMillis = picked.timeInMillis
+                    refreshLabels()
+                }
+            }
         }
 
         // 编辑模式：回填
@@ -177,9 +168,8 @@ class ScheduleEditActivity : AppCompatActivity() {
                     onceAtMillis = run.onceAtMillis
                     notifySwitch.isChecked = run.notify
                     intervalInput.setText(run.intervalMinutes.toString())
-                    repeatSpinner.setSelection(repeatValues.indexOf(run.repeatType).coerceAtLeast(0))
-                    weekdaySpinner.setSelection((run.weekday - 1).coerceIn(0, 6))
-                    refreshRepeatRows()
+                    refreshRepeatChips()
+                    refreshWeekdayChips()
                     refreshLabels()
                 }
             }
@@ -237,47 +227,71 @@ class ScheduleEditActivity : AppCompatActivity() {
 
     private fun pickTarget(onPicked: (Int, String) -> Unit) {
         val api = AutoDroidApi.service(Session.serverUrl)
-        val handler = object {
-            fun show(names: List<String>, ids: List<Int>) {
-                if (names.isEmpty()) {
-                    toast("暂无可选目标")
-                    return
-                }
-                AlertDialog.Builder(this@ScheduleEditActivity)
-                    .setTitle("选择${if (kind == "scenario") "场景" else "用例"}")
-                    .setItems(names.toTypedArray()) { _, which -> onPicked(ids[which], names[which]) }
-                    .show()
-            }
-        }
         if (kind == "scenario") {
-            api.listScenarios().enqueue(object : Callback<org.autojs.autodroid.net.PaginatedScenarios> {
+            api.listScenarios().enqueue(object : Callback<PaginatedScenarios> {
                 override fun onResponse(
-                    call: Call<org.autojs.autodroid.net.PaginatedScenarios>,
-                    response: Response<org.autojs.autodroid.net.PaginatedScenarios>,
+                    call: Call<PaginatedScenarios>,
+                    response: Response<PaginatedScenarios>,
                 ) {
                     val items = response.body()?.items ?: emptyList()
-                    handler.show(items.map { "${it.name} (id=${it.id})" }, items.map { it.id })
+                    showTargetDialog(items.map { it.id to it.name }, onPicked)
                 }
 
-                override fun onFailure(call: Call<org.autojs.autodroid.net.PaginatedScenarios>, t: Throwable) {
+                override fun onFailure(call: Call<PaginatedScenarios>, t: Throwable) {
                     toast("场景加载失败：${t.message}")
                 }
             })
         } else {
-            api.listCases().enqueue(object : Callback<org.autojs.autodroid.net.PaginatedCases> {
+            api.listCases().enqueue(object : Callback<PaginatedCases> {
                 override fun onResponse(
-                    call: Call<org.autojs.autodroid.net.PaginatedCases>,
-                    response: Response<org.autojs.autodroid.net.PaginatedCases>,
+                    call: Call<PaginatedCases>,
+                    response: Response<PaginatedCases>,
                 ) {
                     val items = response.body()?.items ?: emptyList()
-                    handler.show(items.map { "${it.name} (id=${it.id})" }, items.map { it.id })
+                    showTargetDialog(items.map { it.id to it.name }, onPicked)
                 }
 
-                override fun onFailure(call: Call<org.autojs.autodroid.net.PaginatedCases>, t: Throwable) {
+                override fun onFailure(call: Call<PaginatedCases>, t: Throwable) {
                     toast("用例加载失败：${t.message}")
                 }
             })
         }
+    }
+
+    /** 目标选择弹窗：圆角卡片 + 搜索框 + 列表（选中回填），替代系统 setItems 列表。 */
+    private fun showTargetDialog(options: List<Pair<Int, String>>, onPicked: (Int, String) -> Unit) {
+        if (options.isEmpty()) {
+            toast("暂无可选目标")
+            return
+        }
+        val label = if (kind == "scenario") "场景" else "用例"
+        PickerDialog.show(
+            this,
+            title = "选择$label",
+            emptyText = "没有匹配的$label",
+            options = options.map { (id, name) ->
+                PickerDialog.Option(key = id, name = name, badge = "id=$id", searchKey = id.toString())
+            },
+        ) { picked ->
+            onPicked(picked.key ?: return@show, picked.name)
+        }
+    }
+
+    /** 时间选择：iOS 闹钟风格滚轮（小时/分钟两列，见 WheelDialog）。 */
+    private fun showTimePickerDialog(initialMinutes: Int, onPicked: (Int) -> Unit) {
+        WheelDialog.showTime(this, initialMinutes, onPicked)
+    }
+
+    /** 日期选择：同款滚轮（年/月/日三列，天数随年月联动）。 */
+    private fun showDatePickerDialog(initialMillis: Long, onPicked: (Int, Int, Int) -> Unit) {
+        val cal = Calendar.getInstance().apply { if (initialMillis > 0) timeInMillis = initialMillis }
+        WheelDialog.showDate(
+            this,
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH),
+            onPicked,
+        )
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

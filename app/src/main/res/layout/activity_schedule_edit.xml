@@ -1,173 +1,276 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:fitsSystemWindows="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/ad_bg"
-    android:fillViewport="true">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <include layout="@layout/ad_header" />
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
-            style="@style/AdCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="0dp"
-            android:layout_marginEnd="0dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="任务名称"
-                android:textColor="@color/ad_text_secondary"
-                android:textSize="13sp" />
-
-            <EditText
-                android:id="@+id/input_name"
-                style="@style/AdInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:hint="可留空，默认使用目标名称"
-                android:inputType="text"
-                android:maxLines="1" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="任务类型"
-                android:textColor="@color/ad_text_secondary"
-                android:textSize="13sp" />
-
-            <RadioGroup
-                android:id="@+id/radio_kind"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:id="@+id/radio_case"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="用例"
-                    android:textColor="@color/ad_text" />
-
-                <RadioButton
-                    android:id="@+id/radio_scenario"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:text="场景"
-                    android:textColor="@color/ad_text" />
-            </RadioGroup>
-
-            <Button
-                android:id="@+id/btn_target"
-                style="@style/AdButtonSecondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="选择目标（必选）" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:text="重复策略"
-                android:textColor="@color/ad_text_secondary"
-                android:textSize="13sp" />
-
-            <Spinner
-                android:id="@+id/spinner_repeat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
 
             <LinearLayout
-                android:id="@+id/row_time"
+                style="@style/AdCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <Button
-                    android:id="@+id/btn_time"
-                    style="@style/AdButtonSecondary"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="时间：09:00" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_weekday"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <Spinner
-                    android:id="@+id/spinner_weekday"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_interval"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
+                    android:text="任务名称"
+                    android:textColor="@color/ad_text_secondary"
+                    android:textSize="13sp" />
 
                 <EditText
-                    android:id="@+id/input_interval"
+                    android:id="@+id/input_name"
                     style="@style/AdInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="间隔分钟数"
-                    android:inputType="number"
+                    android:layout_marginTop="6dp"
+                    android:hint="可留空，默认使用目标名称"
+                    android:inputType="text"
                     android:maxLines="1" />
-            </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/row_once"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="任务类型"
+                    android:textColor="@color/ad_text_secondary"
+                    android:textSize="13sp" />
 
-                <Button
-                    android:id="@+id/btn_once"
-                    style="@style/AdButtonSecondary"
+                <RadioGroup
+                    android:id="@+id/radio_kind"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/radio_case"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="用例"
+                        android:textColor="@color/ad_text" />
+
+                    <RadioButton
+                        android:id="@+id/radio_scenario"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="场景"
+                        android:textColor="@color/ad_text" />
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/btn_target"
+                    style="@style/AdButtonSecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
                     android:layout_marginTop="8dp"
-                    android:text="选择执行时间" />
+                    android:text="选择目标（必选）" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="重复策略"
+                    android:textColor="@color/ad_text_secondary"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/chips_repeat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/chip_daily"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="每天" />
+
+                    <TextView
+                        android:id="@+id/chip_weekly"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="每周" />
+
+                    <TextView
+                        android:id="@+id/chip_interval"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="间隔" />
+
+                    <TextView
+                        android:id="@+id/chip_once"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:text="单次" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/btn_time"
+                        style="@style/AdButtonSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:text="时间：09:00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_weekday"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/chip_wd_1"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="一" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_2"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="二" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_3"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="三" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_4"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="四" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_5"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="五" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_6"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="5dp"
+                        android:layout_weight="1"
+                        android:text="六" />
+
+                    <TextView
+                        android:id="@+id/chip_wd_7"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:text="日" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_interval"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:id="@+id/input_interval"
+                        style="@style/AdInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:hint="间隔分钟数"
+                        android:inputType="number"
+                        android:maxLines="1" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_once"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btn_once"
+                        style="@style/AdButtonSecondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:text="选择执行时间" />
+                </LinearLayout>
+
+                <Switch
+                    android:id="@+id/switch_notify"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="执行后发送飞书通知"
+                    android:textColor="@color/ad_text_secondary"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_save"
+                    style="@style/AdButtonPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="18dp"
+                    android:text="保存并启用" />
             </LinearLayout>
-
-            <Switch
-                android:id="@+id/switch_notify"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="执行后发送飞书通知"
-                android:textColor="@color/ad_text_secondary"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/btn_save"
-                style="@style/AdButtonPrimary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="保存并启用" />
         </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>
