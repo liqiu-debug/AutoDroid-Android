@@ -9,6 +9,8 @@
 > - 本仓库基于 [AutoJs6 6.7.0](https://github.com/SuperMonster003/AutoJs6) fork 构建，复用其无障碍自动化引擎；
 >   **iOS 客户端将另建仓库**，本仓库只服务 Android。
 > - 应用名称 AutoDroid，包名 `com.autodroid.runner`，可与官方 AutoJs6 共存安装。
+> - 预编译包见 [Releases](https://github.com/liqiu-debug/AutoDroid-Android/releases)（当前提供 arm64-v8a，debug 签名；
+>   首次打开请在登录页把服务器地址改成你的平台地址，默认值只是占位）。
 >
 > ### 功能
 >
