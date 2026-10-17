@@ -11,6 +11,7 @@ import android.util.Log
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.run.RunBridge
+import org.autojs.autodroid.run.RunNotifier
 import org.autojs.autojs.model.script.ScriptFile
 import org.autojs.autojs.model.script.Scripts
 import java.io.File
@@ -67,9 +68,18 @@ class ScheduledRunService : Service() {
 
         val runUuid = UUID.randomUUID().toString()
         val dir = RunBridge.prepareRunDir(this, bundle, runUuid, run.notify)
-        RunBridge.pruneRuns(this)
+        RunBridge.pruneRuns(this, currentDir = dir)
+        val mainJs = File(dir, "main.js")
+        if (!mainJs.isFile) {
+            Log.w(TAG, "定时任务 #${run.id}（${run.name}）启动失败：main.js 未就绪")
+            return
+        }
         Log.i(TAG, "定时任务 #${run.id}（${run.name}）开始执行：$runUuid")
-        Scripts.run(this, ScriptFile(File(dir, "main.js").absolutePath))
+        if (Scripts.run(this, ScriptFile(mainJs.absolutePath)) == null) {
+            Log.w(TAG, "定时任务 #${run.id}（${run.name}）脚本启动失败")
+        } else {
+            RunNotifier.watchResultAndNotify(this, dir, run.kind, run.name)
+        }
     }
 
     private fun buildNotification(text: String): Notification {
@@ -84,7 +94,7 @@ class ScheduledRunService : Service() {
             )
         }
         return Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("AutoDroid Runner")
+            .setContentTitle("AutoDroid")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .build()

@@ -64,11 +64,20 @@ object RunBridge {
         return dir
     }
 
-    /** 清理历史运行目录（保留最近 keep 个）。 */
-    fun pruneRuns(context: Context, keep: Int = 10) {
+    /**
+     * 清理历史运行目录（保留最近 keep 个，按目录修改时间排序）。
+     *
+     * 注意：runId 是随机 UUID，绝不能按目录名排序——否则刚创建的运行目录
+     * 可能被当作"最旧"的删掉，导致 main.js 缺失、脚本无法启动。
+     * currentDir 为当前运行目录，显式排除以免被误删。
+     */
+    fun pruneRuns(context: Context, keep: Int = 10, currentDir: File? = null) {
         try {
             val runsDir = File(context.filesDir, "runs")
-            val dirs = runsDir.listFiles()?.sortedByDescending { it.name } ?: return
+            val dirs = runsDir.listFiles()
+                ?.filter { it.isDirectory && it.absolutePath != currentDir?.absolutePath }
+                ?.sortedByDescending { it.lastModified() }
+                ?: return
             dirs.drop(keep).forEach { it.deleteRecursively() }
         } catch (_: Exception) {
         }

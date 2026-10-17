@@ -17,6 +17,7 @@ import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.ScriptBundle
 import org.autojs.autodroid.run.RunBridge
+import org.autojs.autodroid.run.RunNotifier
 import org.autojs.autojs.model.script.ScriptFile
 import org.autojs.autojs.model.script.Scripts
 import org.autojs.autojs6.R
@@ -36,6 +37,7 @@ class RunActivity : AppCompatActivity() {
     private lateinit var resultText: TextView
     private lateinit var notifySwitch: Switch
     private lateinit var adapter: RunStepAdapter
+    private lateinit var progressBar: android.widget.ProgressBar
     private var runDir: File? = null
     private var pollStartedAt = 0L
 
@@ -51,12 +53,13 @@ class RunActivity : AppCompatActivity() {
         val caseName = intent.getStringExtra(EXTRA_CASE_NAME) ?: "用例"
         val kind = intent.getStringExtra(EXTRA_KIND) ?: "case"
 
-        findViewById<TextView>(R.id.text_title).text = caseName
+        AdHeader.bind(this, caseName)
         statusText = findViewById(R.id.text_status)
         resultText = findViewById(R.id.text_result)
         notifySwitch = findViewById(R.id.switch_notify)
         notifySwitch.isChecked = Session.notifyDefault
 
+        progressBar = findViewById(R.id.progress_run)
         adapter = RunStepAdapter(this)
         findViewById<ListView>(R.id.list_steps).adapter = adapter
 
@@ -107,12 +110,20 @@ class RunActivity : AppCompatActivity() {
                             this@RunActivity, bundle, runId, notifySwitch.isChecked
                         )
                         runDir = dir
-                        RunBridge.pruneRuns(this@RunActivity)
+                        RunBridge.pruneRuns(this@RunActivity, currentDir = dir)
                         statusText.text = "执行中…（$targetName）"
-                        Scripts.run(
+                        progressBar.visibility = View.VISIBLE
+                        val mainJs = File(dir, "main.js")
+                        val execution = Scripts.run(
                             this@RunActivity,
-                            ScriptFile(File(dir, "main.js").absolutePath),
+                            ScriptFile(mainJs.absolutePath),
                         )
+                        if (execution == null || !mainJs.isFile) {
+                            progressBar.visibility = View.GONE
+                            statusText.text = "脚本启动失败（运行文件未就绪），可点击「重新运行」重试"
+                            return
+                        }
+                        RunNotifier.watchResultAndNotify(applicationContext, dir, kind, targetName)
                         pollStartedAt = System.currentTimeMillis()
                         handler.postDelayed(pollRunnable, POLL_INTERVAL_MS)
                     } catch (e: Exception) {
@@ -142,11 +153,16 @@ class RunActivity : AppCompatActivity() {
             statusText.text = "等待执行结果超时（脚本可能仍在后台运行，稍后可在报告中心查看）"
             return
         }
-        statusText.text = "执行中…（已等待 ${elapsed / 1000} 秒）"
+        statusText.text = if (elapsed > 120_000) {
+            "执行中…（已等待 ${elapsed / 1000} 秒）\n长时间无结果：可点击「重新运行」重试"
+        } else {
+            "执行中…（已等待 ${elapsed / 1000} 秒）"
+        }
         handler.postDelayed(pollRunnable, POLL_INTERVAL_MS)
     }
 
     private fun showResult(result: RunBridge.RunResult) {
+        progressBar.visibility = View.GONE
         statusText.text = if (result.success) "执行完成：全部通过 ✓" else "执行完成：存在失败步骤 ✗"
         adapter.setSteps(result.steps)
         resultText.text = buildString {
