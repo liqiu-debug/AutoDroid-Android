@@ -72,6 +72,7 @@ class App : MultiDexApplication() {
                 setUpLeakCanary()
 
                 AutoJs.initInstance(this)
+                if (!AbstractAutoJs.isInrt) org.autojs.autodroid.net.AppPresence.install(this)
                 GlobalKeyObserver.initIfNeeded(applicationContext)
                 setupDrawableImageLoader()
                 TimedTaskScheduler.init(this)

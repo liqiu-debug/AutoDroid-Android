@@ -35,10 +35,16 @@ class SettingsActivity : AppCompatActivity() {
         notifySwitch.isChecked = Session.notifyDefault
 
         findViewById<Button>(R.id.btn_save).setOnClickListener {
+            val serverChanged = Session.serverUrl.trimEnd('/') != serverInput.text.toString().trim().trimEnd('/')
+            if (serverChanged) org.autojs.autodroid.net.AppPresence.logout()
             Session.serverUrl = serverInput.text.toString()
             Session.deviceName = deviceNameInput.text.toString()
             Session.notifyDefault = notifySwitch.isChecked
             toast("已保存")
+            if (serverChanged) {
+                startActivity(Intent(this, LoginActivity::class.java))
+                finishAffinity()
+            } else org.autojs.autodroid.net.AppPresence.refreshNow()
         }
 
         findViewById<Button>(R.id.btn_accessibility).setOnClickListener {
@@ -56,7 +62,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btn_logout).setOnClickListener {
-            Session.clearLogin()
+            org.autojs.autodroid.net.AppPresence.logout()
             toast("已退出登录")
             startActivity(Intent(this, LoginActivity::class.java))
             finishAffinity()

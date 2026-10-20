@@ -1,10 +1,7 @@
 package org.autojs.autodroid.ui
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -12,8 +9,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
-import org.autojs.autodroid.net.DeviceRegisterRequest
-import org.autojs.autodroid.net.DeviceRegisterResponse
 import org.autojs.autodroid.net.LoginResponse
 import org.autojs.autojs6.R
 import retrofit2.Call
@@ -70,7 +65,7 @@ class LoginActivity : AppCompatActivity() {
                         Session.token = token
                         Session.username = username
                         statusText.text = "登录成功，正在注册设备…"
-                        registerDevice()
+                        org.autojs.autodroid.net.AppPresence.refreshNow()
                         startActivity(Intent(this@LoginActivity, CaseListActivity::class.java))
                         finish()
                     } else {
@@ -83,33 +78,6 @@ class LoginActivity : AppCompatActivity() {
                     statusText.text = "连接失败：${t.message}\n请检查服务器地址与网络（设备需能访问平台所在局域网）"
                 }
             })
-    }
-
-    /** 登录成功后向平台注册本机（设备中心可见）；失败不影响使用。 */
-    private fun registerDevice() {
-        try {
-            val payload = DeviceRegisterRequest(
-                android_id = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID),
-                name = Session.deviceName.ifBlank { Build.MODEL ?: "" },
-                model = Build.MODEL ?: "",
-                brand = Build.BRAND ?: "",
-                android_version = Build.VERSION.RELEASE ?: "",
-                resolution = "${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}",
-            )
-            AutoDroidApi.service(Session.serverUrl)
-                .registerDevice(payload)
-                .enqueue(object : Callback<DeviceRegisterResponse> {
-                    override fun onResponse(call: Call<DeviceRegisterResponse>, response: Response<DeviceRegisterResponse>) {
-                        Log.i(TAG, "设备注册完成: ${response.body()?.device_serial}")
-                    }
-
-                    override fun onFailure(call: Call<DeviceRegisterResponse>, t: Throwable) {
-                        Log.w(TAG, "设备注册失败（不影响使用）: ${t.message}")
-                    }
-                })
-        } catch (e: Exception) {
-            Log.w(TAG, "设备注册异常（不影响使用）: ${e.message}")
-        }
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()

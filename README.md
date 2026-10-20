@@ -10,7 +10,7 @@
 >   **iOS 客户端将另建仓库**，本仓库只服务 Android。
 > - 应用名称 AutoDroid，包名 `com.autodroid.runner`，可与官方 AutoJs6 共存安装。
 > - 预编译包见 [Releases](https://github.com/liqiu-debug/AutoDroid-Android/releases)（提供 arm64-v8a / armeabi-v7a / universal
->   三个 ABI，debug 签名；首次打开请在登录页把服务器地址改成你的平台地址，默认值只是占位）。
+>   三个 ABI，debug 签名；最新公开包首次打开的平台地址为空，请填写自己的平台地址）。
 >
 > ### 功能
 >
