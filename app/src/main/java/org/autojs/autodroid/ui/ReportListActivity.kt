@@ -15,10 +15,8 @@ import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.ExecutionItem
 import org.autojs.autodroid.net.PaginatedExecutions
+import org.autojs.autodroid.net.PageLoader
 import org.autojs.autojs6.R
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 /**
  * 报告中心：执行记录列表（点击查看 HTML 报告）。
@@ -28,6 +26,7 @@ class ReportListActivity : AppCompatActivity() {
     private lateinit var adapter: ExecutionAdapter
     private lateinit var statusText: TextView
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var pager: PageLoader<PaginatedExecutions, ExecutionItem>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +41,13 @@ class ReportListActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener { load() }
         val listView = findViewById<ListView>(R.id.list_reports)
         listView.adapter = adapter
+        pager = PageLoader(
+            request = { skip -> AutoDroidApi.service(Session.serverUrl).listExecutions(skip = skip) },
+            unpack = { it.items to it.total },
+        )
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无执行记录", { "共 $it 条执行记录" }, adapter::setItems)
         listView.setOnItemClickListener { _, _, position, _ ->
+            if (position !in 0 until adapter.count) return@setOnItemClickListener
             val item = adapter.getItem(position)
             startActivity(
                 Intent(this, ReportDetailActivity::class.java)
@@ -55,26 +60,12 @@ class ReportListActivity : AppCompatActivity() {
     }
 
     private fun load() {
-        statusText.text = "加载中…"
-        AutoDroidApi.service(Session.serverUrl)
-            .listExecutions()
-            .enqueue(object : Callback<PaginatedExecutions> {
-                override fun onResponse(call: Call<PaginatedExecutions>, response: Response<PaginatedExecutions>) {
-                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
-                    val body = response.body()
-                    if (body == null) {
-                        statusText.text = "加载失败（HTTP ${response.code()}）"
-                        return
-                    }
-                    adapter.setItems(body.items)
-                    statusText.text = if (body.items.isEmpty()) "暂无执行记录" else "共 ${body.total} 条执行记录"
-                }
+        pager.refresh()
+    }
 
-                override fun onFailure(call: Call<PaginatedExecutions>, t: Throwable) {
-                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
-                    statusText.text = "加载失败：${t.message}"
-                }
-            })
+    override fun onDestroy() {
+        pager.cancel()
+        super.onDestroy()
     }
 }
 

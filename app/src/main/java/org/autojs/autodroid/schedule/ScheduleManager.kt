@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import org.autojs.autodroid.data.Session
 import java.util.Calendar
 
 /**
@@ -15,6 +16,7 @@ import java.util.Calendar
 object ScheduleManager {
 
     const val EXTRA_SCHEDULE_ID = "schedule_id"
+    const val EXTRA_EXECUTION_ID = "execution_id"
 
     fun computeNextRun(run: ScheduledRun, fromMillis: Long): Long {
         val cal = Calendar.getInstance()
@@ -42,13 +44,15 @@ object ScheduleManager {
                 return cal.timeInMillis
             }
             "INTERVAL" -> return fromMillis + run.intervalMinutes.coerceAtLeast(1) * 60_000L
-            "ONCE" -> return run.onceAtMillis
+            "ONCE" -> return run.onceAtMillis.takeIf { it > fromMillis } ?: 0L
         }
         return 0L
     }
 
     fun schedule(context: Context, run: ScheduledRun, nextAt: Long) {
-        if (!run.enabled || nextAt <= 0L) {
+        Session.init(context)
+        if (!run.enabled || nextAt <= 0L || Session.token.isNullOrBlank() ||
+            !run.belongsTo(Session.serverUrl, Session.username.orEmpty())) {
             cancel(context, run.id)
             return
         }
@@ -65,6 +69,17 @@ object ScheduleManager {
     fun cancel(context: Context, runId: Long) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(pendingIntent(context, runId))
+    }
+
+    fun suspendAll(context: Context) {
+        val app = context.applicationContext
+        AppDatabase.io.execute {
+            val dao = AppDatabase.get(app).scheduledRuns()
+            for (run in dao.enabledRuns()) {
+                cancel(app, run.id)
+                dao.update(run.copy(enabled = false, nextRunAt = 0L))
+            }
+        }
     }
 
     fun canScheduleExact(context: Context): Boolean {

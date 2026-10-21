@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
+import org.autojs.autodroid.net.ServerAddress
 import org.autojs.autojs6.R
 
 /**
@@ -35,9 +36,11 @@ class SettingsActivity : AppCompatActivity() {
         notifySwitch.isChecked = Session.notifyDefault
 
         findViewById<Button>(R.id.btn_save).setOnClickListener {
-            val serverChanged = Session.serverUrl.trimEnd('/') != serverInput.text.toString().trim().trimEnd('/')
+            val server = try { ServerAddress.normalize(serverInput.text.toString()) }
+                catch (error: IllegalArgumentException) { toast(error.message ?: "平台地址无效"); return@setOnClickListener }
+            val serverChanged = Session.serverUrl != server
             if (serverChanged) org.autojs.autodroid.net.AppPresence.logout()
-            Session.serverUrl = serverInput.text.toString()
+            Session.serverUrl = server
             Session.deviceName = deviceNameInput.text.toString()
             Session.notifyDefault = notifySwitch.isChecked
             toast("已保存")

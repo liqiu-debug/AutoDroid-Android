@@ -18,8 +18,7 @@ import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.ScriptBundle
 import org.autojs.autodroid.run.RunBridge
 import org.autojs.autodroid.run.RunNotifier
-import org.autojs.autojs.model.script.ScriptFile
-import org.autojs.autojs.model.script.Scripts
+import org.autojs.autodroid.run.RunCoordinator
 import org.autojs.autojs6.R
 import retrofit2.Call
 import retrofit2.Callback
@@ -40,6 +39,8 @@ class RunActivity : AppCompatActivity() {
     private lateinit var progressBar: android.widget.ProgressBar
     private var runDir: File? = null
     private var pollStartedAt = 0L
+    private var scriptCall: Call<ScriptBundle>? = null
+    private var preparingRunID: String? = null
 
     private val pollRunnable = object : Runnable {
         override fun run() = pollOnce()
@@ -65,8 +66,19 @@ class RunActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_run).setOnClickListener { startRun(kind, caseId, caseName) }
 
-        if (caseId >= 0) {
+        val restoredID = savedInstanceState?.getString("run_id")
+        val restoredDir = restoredID?.takeIf { it.matches(Regex("[A-Za-z0-9_-]+")) }
+            ?.let { File(filesDir, "runs/$it") }?.takeIf { it.isDirectory }
+        if (restoredDir != null) {
+            runDir = restoredDir
+            pollStartedAt = savedInstanceState.getLong("poll_started", System.currentTimeMillis())
+            findViewById<Button>(R.id.btn_run).isEnabled = !RunCoordinator.owns(restoredDir.name)
+            progressBar.visibility = View.VISIBLE
+            handler.post(pollRunnable)
+        } else if (caseId >= 0 && savedInstanceState == null) {
             startRun(kind, caseId, caseName)
+        } else if (caseId >= 0) {
+            statusText.text = "准备已中断，可点击重新运行"
         } else {
             statusText.text = "缺少用例 ID"
         }
@@ -77,6 +89,20 @@ class RunActivity : AppCompatActivity() {
             statusText.text = "缺少目标 ID"
             return
         }
+        val server = Session.serverUrl
+        val token = Session.token
+        val account = Session.username
+        if (token.isNullOrBlank()) {
+            statusText.text = "登录已过期，请重新登录"
+            return
+        }
+        val runId = UUID.randomUUID().toString()
+        if (!RunCoordinator.reserve(runId)) {
+            statusText.text = "本机已有任务正在准备或执行，请等待结束"
+            return
+        }
+        preparingRunID = runId
+        findViewById<Button>(R.id.btn_run).isEnabled = false
         handler.removeCallbacks(pollRunnable)
         adapter.setSteps(emptyList())
         resultText.text = ""
@@ -88,8 +114,18 @@ class RunActivity : AppCompatActivity() {
         } else {
             api.caseScript(targetId)
         }
+        scriptCall = call
         call.enqueue(object : Callback<ScriptBundle> {
                 override fun onResponse(call: Call<ScriptBundle>, response: Response<ScriptBundle>) {
+                    if (isDestroyed || isFinishing) {
+                        releasePreparation(runId)
+                        return
+                    }
+                    if (Session.token != token || Session.serverUrl != server || Session.username != account) {
+                        releasePreparation(runId)
+                        statusText.text = "登录状态已变化，请重新登录后运行"
+                        return
+                    }
                     if (!response.isSuccessful) {
                         val detail = try {
                             response.errorBody()?.string()?.take(500)
@@ -97,68 +133,96 @@ class RunActivity : AppCompatActivity() {
                             null
                         }
                         statusText.text = "脚本下发失败（HTTP ${response.code()}）\n${detail ?: ""}"
+                        releasePreparation(runId)
                         return
                     }
                     val bundle = response.body()
                     if (bundle == null) {
                         statusText.text = "脚本包为空"
+                        releasePreparation(runId)
                         return
                     }
                     try {
-                        val runId = UUID.randomUUID().toString()
                         val dir = RunBridge.prepareRunDir(
-                            this@RunActivity, bundle, runId, notifySwitch.isChecked
+                            this@RunActivity, bundle, runId, notifySwitch.isChecked, server, token
                         )
                         runDir = dir
                         RunBridge.pruneRuns(this@RunActivity, currentDir = dir)
                         statusText.text = "执行中…（$targetName）"
                         progressBar.visibility = View.VISIBLE
-                        val mainJs = File(dir, "main.js")
-                        val execution = Scripts.run(
-                            this@RunActivity,
-                            ScriptFile(mainJs.absolutePath),
-                        )
-                        if (execution == null || !mainJs.isFile) {
-                            progressBar.visibility = View.GONE
-                            statusText.text = "脚本启动失败（运行文件未就绪），可点击「重新运行」重试"
-                            return
+                        RunCoordinator.start(dir, runId) {
+                            if (File(dir, "report.json").isFile) {
+                                RunNotifier.watchResultAndNotify(applicationContext, dir, kind, targetName)
+                            }
+                            handler.post {
+                                if (!isDestroyed && !isFinishing && runDir == dir) {
+                                    findViewById<Button>(R.id.btn_run).isEnabled = true
+                                    handler.removeCallbacks(pollRunnable)
+                                    pollOnce()
+                                }
+                            }
                         }
-                        RunNotifier.watchResultAndNotify(applicationContext, dir, kind, targetName)
+                        preparingRunID = null
                         pollStartedAt = System.currentTimeMillis()
                         handler.postDelayed(pollRunnable, POLL_INTERVAL_MS)
                     } catch (e: Exception) {
                         statusText.text = "运行准备失败：${e.message}"
+                        releasePreparation(runId)
+                        progressBar.visibility = View.GONE
                     }
                 }
 
                 override fun onFailure(call: Call<ScriptBundle>, t: Throwable) {
-                    statusText.text = "拉取脚本包失败：${t.message}"
+                    releasePreparation(runId)
+                    if (!isDestroyed && !call.isCanceled) statusText.text = "拉取脚本包失败：${t.message}"
                 }
             })
+    }
+
+    private fun releasePreparation(id: String) {
+        RunCoordinator.release(id)
+        if (preparingRunID == id) preparingRunID = null
+        if (!isDestroyed) findViewById<Button>(R.id.btn_run).isEnabled = true
     }
 
     private fun pollOnce() {
         val dir = runDir ?: return
         val report = File(dir, "report.json")
-        if (report.exists()) {
+        val running = RunCoordinator.owns(dir.name)
+        if (report.exists() && !running) {
             try {
                 showResult(RunBridge.parseReport(report))
             } catch (e: Exception) {
+                progressBar.visibility = View.GONE
                 statusText.text = "执行完成，但结果解析失败：${e.message}"
             }
             return
         }
+        val engineError = File(dir, "engine-error.txt")
+        if (!running && engineError.isFile) {
+            progressBar.visibility = View.GONE
+            statusText.text = "执行失败：${engineError.readText()}"
+            findViewById<Button>(R.id.btn_run).isEnabled = true
+            return
+        }
         val elapsed = System.currentTimeMillis() - pollStartedAt
         if (elapsed > POLL_TIMEOUT_MS) {
+            progressBar.visibility = View.GONE
             statusText.text = "等待执行结果超时（脚本可能仍在后台运行，稍后可在报告中心查看）"
             return
         }
         statusText.text = if (elapsed > 120_000) {
-            "执行中…（已等待 ${elapsed / 1000} 秒）\n长时间无结果：可点击「重新运行」重试"
+            "执行中…（已等待 ${elapsed / 1000} 秒），请等待当前任务结束"
         } else {
             "执行中…（已等待 ${elapsed / 1000} 秒）"
         }
         handler.postDelayed(pollRunnable, POLL_INTERVAL_MS)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        runDir?.let { outState.putString("run_id", it.name) }
+        outState.putLong("poll_started", pollStartedAt)
+        super.onSaveInstanceState(outState)
     }
 
     private fun showResult(result: RunBridge.RunResult) {
@@ -176,6 +240,8 @@ class RunActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(pollRunnable)
+        scriptCall?.cancel()
+        preparingRunID?.let { RunCoordinator.release(it) }
     }
 
     companion object {

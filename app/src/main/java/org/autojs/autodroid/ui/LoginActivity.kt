@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.LoginResponse
+import org.autojs.autodroid.net.ServerAddress
 import org.autojs.autojs6.R
 import retrofit2.Call
 import retrofit2.Callback
@@ -34,12 +35,12 @@ class LoginActivity : AppCompatActivity() {
         usernameInput.setText(Session.username ?: "")
 
         loginButton.setOnClickListener {
-            val server = serverInput.text.toString().trim()
+            val server = try { ServerAddress.normalize(serverInput.text.toString()) }
+                catch (error: IllegalArgumentException) { toast(error.message ?: "平台地址无效"); return@setOnClickListener }
             val username = usernameInput.text.toString().trim()
             val password = passwordInput.text.toString()
             when {
                 server.isEmpty() -> toast("请填写服务器地址")
-                !server.startsWith("http") -> toast("服务器地址需以 http:// 或 https:// 开头")
                 username.isEmpty() || password.isEmpty() -> toast("请填写账号与密码")
                 else -> doLogin(server, username, password, loginButton, statusText)
             }
@@ -55,13 +56,13 @@ class LoginActivity : AppCompatActivity() {
     ) {
         loginButton.isEnabled = false
         statusText.text = "登录中…"
-        Session.serverUrl = server
         AutoDroidApi.service(server).login(username, password)
             .enqueue(object : Callback<LoginResponse> {
                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                     loginButton.isEnabled = true
                     val token = response.body()?.access_token
                     if (response.isSuccessful && !token.isNullOrBlank()) {
+                        Session.serverUrl = server
                         Session.token = token
                         Session.username = username
                         statusText.text = "登录成功，正在注册设备…"

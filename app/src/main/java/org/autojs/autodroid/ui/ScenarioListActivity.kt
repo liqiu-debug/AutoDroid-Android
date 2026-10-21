@@ -18,10 +18,8 @@ import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.PaginatedScenarios
 import org.autojs.autodroid.net.ScenarioItem
+import org.autojs.autodroid.net.PageLoader
 import org.autojs.autojs6.R
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 /**
  * 场景列表：搜索 + 点击运行（场景脚本包含全部子用例与串联入口）。
@@ -32,6 +30,8 @@ class ScenarioListActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var keywordInput: EditText
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var pager: PageLoader<PaginatedScenarios, ScenarioItem>
+    private var loadedKeyword: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +41,7 @@ class ScenarioListActivity : AppCompatActivity() {
         AdBottomNav.bind(this, "scenarios")
         statusText = findViewById(R.id.text_status)
         val swipe = findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipeRefresh = swipe
         swipe.setColorSchemeColors(ContextCompat.getColor(this, R.color.ad_primary))
         swipe.setOnRefreshListener { load() }
         adapter = ScenarioAdapter(this) { item ->
@@ -61,8 +62,16 @@ class ScenarioListActivity : AppCompatActivity() {
         keywordInput = header.findViewById(R.id.input_keyword)
         header.findViewById<Button>(R.id.btn_search).setOnClickListener { load() }
 
+        pager = PageLoader(
+            request = { skip -> AutoDroidApi.service(Session.serverUrl).listScenarios(skip = skip, keyword = loadedKeyword) },
+            unpack = { it.items to it.total },
+        )
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无场景", { "共 $it 个场景" }, adapter::setItems)
+
         listView.setOnItemClickListener { _, _, position, _ ->
-            val item = adapter.getItem(position - listView.headerViewsCount)
+            val index = position - listView.headerViewsCount
+            if (index !in 0 until adapter.count) return@setOnItemClickListener
+            val item = adapter.getItem(index)
             startActivity(
                 Intent(this, ScenarioDetailActivity::class.java)
                     .putExtra(ScenarioDetailActivity.EXTRA_SCENARIO_ID, item.id)
@@ -72,31 +81,16 @@ class ScenarioListActivity : AppCompatActivity() {
 
         PullDownMoveHelper.attach(swipe, listView)
         load()
-        swipeRefresh = swipe
     }
 
     private fun load() {
-        statusText.text = "加载中…"
-        val keyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
-        AutoDroidApi.service(Session.serverUrl)
-            .listScenarios(keyword = keyword)
-            .enqueue(object : Callback<PaginatedScenarios> {
-                override fun onResponse(call: Call<PaginatedScenarios>, response: Response<PaginatedScenarios>) {
-                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
-                    val body = response.body()
-                    if (body == null) {
-                        statusText.text = "加载失败（HTTP ${response.code()}）"
-                        return
-                    }
-                    adapter.setItems(body.items)
-                    statusText.text = if (body.items.isEmpty()) "暂无场景" else "共 ${body.total} 个场景"
-                }
+        loadedKeyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
+        pager.refresh()
+    }
 
-                override fun onFailure(call: Call<PaginatedScenarios>, t: Throwable) {
-                    if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
-                    statusText.text = "加载失败：${t.message}"
-                }
-            })
+    override fun onDestroy() {
+        pager.cancel()
+        super.onDestroy()
     }
 }
 

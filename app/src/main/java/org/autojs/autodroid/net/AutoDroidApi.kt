@@ -117,6 +117,7 @@ data class ScriptBundle(
     val main_js: String? = null,
     val case_files: List<ScriptFileEntry> = emptyList(),
     val assets: Map<String, String> = emptyMap(),
+    val precheck: com.google.gson.JsonObject? = null,
 )
 
 // ---------------------------------------------------------------------------
@@ -202,7 +203,8 @@ object AutoDroidApi {
      * 会一直带空 token 导致 401。
      */
     fun service(serverUrl: String): ApiService {
-        val normalized = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+        val root = ServerAddress.normalize(serverUrl)
+        val normalized = "$root/"
         synchronized(this) {
             if (retrofit == null || normalized != currentBaseUrl) {
                 val client = OkHttpClient.Builder()
@@ -211,10 +213,20 @@ object AutoDroidApi {
                     .writeTimeout(60, TimeUnit.SECONDS)
                     .addInterceptor { chain ->
                         val builder = chain.request().newBuilder()
-                        org.autojs.autodroid.data.Session.token
+                        val session = org.autojs.autodroid.data.Session
+                        val requestToken = session.token
+                            ?.takeIf { session.serverUrl == root }
                             ?.takeIf { it.isNotBlank() }
-                            ?.let { builder.header("Authorization", "Bearer $it") }
-                        chain.proceed(builder.build())
+                        if (!chain.request().url.encodedPath.endsWith("/auth/token")) {
+                            requestToken?.let { builder.header("Authorization", "Bearer $it") }
+                        }
+                        val response = chain.proceed(builder.build())
+                        if (response.code == 401 && requestToken != null &&
+                            session.token == requestToken && session.serverUrl == root &&
+                            response.request.header("Authorization") != null) {
+                            session.clearLogin()
+                        }
+                        response
                     }
                     .build()
                 retrofit = Retrofit.Builder()

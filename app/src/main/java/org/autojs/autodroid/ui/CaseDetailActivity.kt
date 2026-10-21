@@ -133,8 +133,10 @@ class StepAdapter : BaseAdapter() {
             val detail = when (step.action) {
                 "click", "wait_until_exists", "input" -> locatorText(step)
                 "assert_text" -> args?.get("expected_text")?.takeIf { !it.isJsonNull }?.asString
-                    ?.let { "包含「$it」" } ?: ""
-                "assert_image", "click_image" -> args?.get("image")?.takeIf { !it.isJsonNull }?.asString
+                    ?.let { "${assertTextMode(args)}「$it」" } ?: ""
+                "assert_image" -> args?.get("image")?.takeIf { !it.isJsonNull }?.asString
+                    ?.let { "${assertImageMode(args)} · 模板 $it" } ?: ""
+                "click_image" -> args?.get("image")?.takeIf { !it.isJsonNull }?.asString
                     ?.let { "模板 $it" } ?: ""
                 "extract_by_ocr" -> buildString {
                     args?.get("region")?.takeIf { !it.isJsonNull }?.let { append("区域 ${it}") }
@@ -147,6 +149,18 @@ class StepAdapter : BaseAdapter() {
                 else -> ""
             }
             return if (detail.isNullOrBlank()) label else "$label · $detail"
+        }
+
+        /** 文本断言匹配模式：args.match_mode == "not_contains" → 不包含，否则包含。 */
+        private fun assertTextMode(args: com.google.gson.JsonObject?): String {
+            val mode = args?.get("match_mode")?.takeIf { !it.isJsonNull }?.asString
+            return if (mode == "not_contains") "不包含" else "包含"
+        }
+
+        /** 图像断言匹配模式：args.match_mode == "not_exists" → 不存在，否则存在。 */
+        private fun assertImageMode(args: com.google.gson.JsonObject?): String {
+            val mode = args?.get("match_mode")?.takeIf { !it.isJsonNull }?.asString
+            return if (mode == "not_exists") "不存在" else "存在"
         }
 
         private fun locatorText(step: CaseStepItem): String {

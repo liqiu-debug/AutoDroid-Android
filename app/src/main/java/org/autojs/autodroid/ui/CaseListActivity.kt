@@ -22,6 +22,7 @@ import org.autojs.autodroid.net.CaseItem
 import org.autojs.autodroid.net.FolderNode
 import org.autojs.autodroid.net.FolderTreeResponse
 import org.autojs.autodroid.net.PaginatedCases
+import org.autojs.autodroid.net.PageLoader
 import org.autojs.autojs6.R
 import retrofit2.Call
 import retrofit2.Callback
@@ -40,6 +41,9 @@ class CaseListActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private var folderChoices: List<FolderChoice> = emptyList()
     private var selectedFolderId: Int? = null
+    private lateinit var pager: PageLoader<PaginatedCases, CaseItem>
+    private var loadedKeyword: String? = null
+    private var loadedFolderId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,8 +76,16 @@ class CaseListActivity : AppCompatActivity() {
         header.findViewById<Button>(R.id.btn_search).setOnClickListener { loadCases() }
         header.findViewById<View>(R.id.row_folder).setOnClickListener { showFolderDialog() }
 
+        pager = PageLoader(
+            request = { skip -> api().listCases(skip = skip, keyword = loadedKeyword, folderId = loadedFolderId) },
+            unpack = { it.items to it.total },
+        )
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无用例", { "共 $it 条用例" }, adapter::setItems)
+
         listView.setOnItemClickListener { _, _, position, _ ->
-            val item = adapter.getItem(position - listView.headerViewsCount)
+            val index = position - listView.headerViewsCount
+            if (index !in 0 until adapter.count) return@setOnItemClickListener
+            val item = adapter.getItem(index)
             startActivity(
                 Intent(this, CaseDetailActivity::class.java)
                     .putExtra(CaseDetailActivity.EXTRA_CASE_ID, item.id)
@@ -116,10 +128,6 @@ class CaseListActivity : AppCompatActivity() {
 
     private fun api() = AutoDroidApi.service(Session.serverUrl)
 
-    private fun stopRefreshing() {
-        if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
-    }
-
     // ------------------------------------------------------------------ //
     //  目录选择
     // ------------------------------------------------------------------ //
@@ -133,11 +141,9 @@ class CaseListActivity : AppCompatActivity() {
                 flattenFolders(body.tree, 0, choices)
                 // 注意: 树内只包含已归目录的用例, "全部用例" 不带计数以免误导
                 folderChoices = listOf(FolderChoice("全部用例", null, 0)) + choices
-                stopRefreshing()
             }
 
             override fun onFailure(call: Call<FolderTreeResponse>, t: Throwable) {
-                stopRefreshing()
             }
         })
     }
@@ -193,30 +199,14 @@ class CaseListActivity : AppCompatActivity() {
     //  用例列表
     // ------------------------------------------------------------------ //
     private fun loadCases() {
-        statusText.text = "加载中…"
-        val keyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
-        api().listCases(keyword = keyword, folderId = selectedFolderId)
-            .enqueue(object : Callback<PaginatedCases> {
-                override fun onResponse(call: Call<PaginatedCases>, response: Response<PaginatedCases>) {
-                    stopRefreshing()
-                    val body = response.body()
-                    if (body == null) {
-                        statusText.text = "加载失败（HTTP ${response.code()}）"
-                        return
-                    }
-                    adapter.setItems(body.items)
-                    statusText.text = if (body.items.isEmpty()) {
-                        "暂无用例" + if (selectedFolderId != null) "（当前目录）" else ""
-                    } else {
-                        "共 ${body.total} 条用例"
-                    }
-                }
+        loadedKeyword = keywordInput.text.toString().trim().takeIf { it.isNotEmpty() }
+        loadedFolderId = selectedFolderId
+        pager.refresh()
+    }
 
-                override fun onFailure(call: Call<PaginatedCases>, t: Throwable) {
-                    stopRefreshing()
-                    statusText.text = "加载失败：${t.message}"
-                }
-            })
+    override fun onDestroy() {
+        pager.cancel()
+        super.onDestroy()
     }
 
     /** Android 13+ 需运行时通知权限（运行完成通知、定时任务通知依赖）。 */

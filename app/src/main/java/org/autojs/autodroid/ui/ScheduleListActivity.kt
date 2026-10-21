@@ -20,6 +20,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import org.autojs.autodroid.schedule.AppDatabase
 import org.autojs.autodroid.schedule.ScheduleManager
 import org.autojs.autodroid.schedule.ScheduledRun
+import org.autojs.autodroid.data.Session
 import org.autojs.autojs6.R
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -47,14 +48,21 @@ class ScheduleListActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener { reload() }
 
         adapter = ScheduleAdapter { run, enabled ->
+            if (enabled && !run.belongsTo(Session.serverUrl, Session.username.orEmpty())) {
+                toast("此任务需先编辑并保存，确认所属平台和账号")
+                reload()
+                return@ScheduleAdapter
+            }
+            val next = if (enabled) ScheduleManager.computeNextRun(run, System.currentTimeMillis()) else 0L
+            if (enabled && next <= 0) {
+                toast("单次执行时间已过，请编辑任务时间")
+                reload()
+                return@ScheduleAdapter
+            }
             AppDatabase.io.execute {
                 val updated = run.copy(
                     enabled = enabled,
-                    nextRunAt = if (enabled) {
-                        ScheduleManager.computeNextRun(run, System.currentTimeMillis())
-                    } else {
-                        0L
-                    },
+                    nextRunAt = next,
                 )
                 AppDatabase.get(this).scheduledRuns().update(updated)
                 if (enabled) {
@@ -123,7 +131,7 @@ class ScheduleListActivity : AppCompatActivity() {
 
     private fun reload() {
         AppDatabase.io.execute {
-            val runs = AppDatabase.get(this).scheduledRuns().all()
+            val runs = AppDatabase.get(this).scheduledRuns().forAccount(Session.serverUrl, Session.username.orEmpty())
             runOnUiThread {
                 if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
                 adapter.setItems(runs)

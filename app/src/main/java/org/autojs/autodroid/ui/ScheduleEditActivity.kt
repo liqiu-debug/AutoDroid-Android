@@ -13,13 +13,12 @@ import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.PaginatedCases
 import org.autojs.autodroid.net.PaginatedScenarios
+import org.autojs.autodroid.net.PageLoader
 import org.autojs.autodroid.schedule.AppDatabase
 import org.autojs.autodroid.schedule.ScheduleManager
 import org.autojs.autodroid.schedule.ScheduledRun
 import org.autojs.autojs6.R
 import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.util.Calendar
 
 /**
@@ -35,13 +34,20 @@ class ScheduleEditActivity : AppCompatActivity() {
     private var timeOfDayMinutes = 9 * 60
     private var weekday = 1
     private var onceAtMillis = 0L
+    private var enabled = true
+    private var ownerServer = ""
+    private var ownerAccount = ""
+    private var ownerToken: String? = null
+    private var cancelTargetLoad: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_schedule_edit)
+        Session.init(this)
+        ownerServer = Session.serverUrl; ownerAccount = Session.username.orEmpty(); ownerToken = Session.token
 
-        AdHeader.bind(this, if (editingId > 0) "编辑定时任务" else "新建定时任务")
         editingId = intent.getLongExtra(EXTRA_SCHEDULE_ID, 0L)
+        AdHeader.bind(this, if (editingId > 0) "编辑定时任务" else "新建定时任务")
 
         val nameInput = findViewById<EditText>(R.id.input_name)
         val kindGroup = findViewById<RadioGroup>(R.id.radio_kind)
@@ -50,6 +56,7 @@ class ScheduleEditActivity : AppCompatActivity() {
         val intervalInput = findViewById<EditText>(R.id.input_interval)
         val onceButton = findViewById<Button>(R.id.btn_once)
         val notifySwitch = findViewById<Switch>(R.id.switch_notify)
+        val saveButton = findViewById<Button>(R.id.btn_save)
 
         val repeatChips = listOf(
             "DAILY" to findViewById<TextView>(R.id.chip_daily),
@@ -120,6 +127,7 @@ class ScheduleEditActivity : AppCompatActivity() {
         refreshLabels()
 
         kindGroup.setOnCheckedChangeListener { _, checkedId ->
+            cancelTargetLoad?.invoke(); cancelTargetLoad = null; targetButton.isEnabled = true
             kind = if (checkedId == R.id.radio_scenario) "scenario" else "case"
             targetId = -1
             targetName = ""
@@ -154,9 +162,14 @@ class ScheduleEditActivity : AppCompatActivity() {
 
         // 编辑模式：回填
         if (editingId > 0) {
+            saveButton.isEnabled = false
             AppDatabase.io.execute {
-                val run = AppDatabase.get(this).scheduledRuns().byId(editingId) ?: return@execute
+                val run = AppDatabase.get(this).scheduledRuns().byId(editingId)
                 runOnUiThread {
+                    if (run == null || !(run.belongsTo(ownerServer, ownerAccount) ||
+                            run.serverUrl.isEmpty() && run.username.isEmpty())) {
+                        toast("任务不存在或属于其他账号"); finish(); return@runOnUiThread
+                    }
                     nameInput.setText(run.name)
                     kind = run.kind
                     kindGroup.check(if (run.kind == "scenario") R.id.radio_scenario else R.id.radio_case)
@@ -166,11 +179,13 @@ class ScheduleEditActivity : AppCompatActivity() {
                     timeOfDayMinutes = run.timeOfDayMinutes
                     weekday = run.weekday
                     onceAtMillis = run.onceAtMillis
+                    enabled = run.enabled
                     notifySwitch.isChecked = run.notify
                     intervalInput.setText(run.intervalMinutes.toString())
                     refreshRepeatChips()
                     refreshWeekdayChips()
                     refreshLabels()
+                    saveButton.isEnabled = true
                 }
             }
         } else {
@@ -178,7 +193,11 @@ class ScheduleEditActivity : AppCompatActivity() {
             intervalInput.setText("60")
         }
 
-        findViewById<Button>(R.id.btn_save).setOnClickListener {
+        saveButton.setOnClickListener {
+            if (ownerToken.isNullOrBlank() || Session.token != ownerToken ||
+                Session.serverUrl != ownerServer || Session.username != ownerAccount) {
+                toast("登录状态已变化，请重新打开任务"); finish(); return@setOnClickListener
+            }
             val name = nameInput.text.toString().trim().ifBlank {
                 if (targetName.isNotBlank()) targetName else "定时任务"
             }
@@ -187,8 +206,8 @@ class ScheduleEditActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val interval = intervalInput.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 60
-            if (repeatType == "ONCE" && onceAtMillis <= 0) {
-                toast("请选择单次执行时间")
+            if (enabled && repeatType == "ONCE" && onceAtMillis <= System.currentTimeMillis()) {
+                toast("单次执行时间必须晚于当前时间")
                 return@setOnClickListener
             }
             val run = ScheduledRun(
@@ -203,59 +222,76 @@ class ScheduleEditActivity : AppCompatActivity() {
                 intervalMinutes = interval,
                 onceAtMillis = onceAtMillis,
                 notify = notifySwitch.isChecked,
-                enabled = true,
+                enabled = enabled,
+                serverUrl = ownerServer,
+                username = ownerAccount,
             )
+            saveButton.isEnabled = false
             AppDatabase.io.execute {
-                val dao = AppDatabase.get(this).scheduledRuns()
-                val next = ScheduleManager.computeNextRun(run, System.currentTimeMillis())
-                val saved = run.copy(nextRunAt = next)
-                val id = if (editingId > 0) {
-                    dao.update(saved)
-                    editingId
-                } else {
-                    dao.insert(saved)
-                }
-                val finalRun = saved.copy(id = id)
-                ScheduleManager.schedule(this, finalRun, next)
-                runOnUiThread {
-                    toast("已保存，下次执行：${java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(next))}")
-                    finish()
+                try {
+                    check(Session.token == ownerToken && Session.serverUrl == ownerServer && Session.username == ownerAccount) {
+                        "登录状态已变化，请重新打开任务"
+                    }
+                    val dao = AppDatabase.get(this).scheduledRuns()
+                    val next = if (run.enabled) ScheduleManager.computeNextRun(run, System.currentTimeMillis()) else 0L
+                    val saved = run.copy(nextRunAt = next)
+                    val id = if (editingId > 0) {
+                        check(dao.byId(editingId) != null) { "任务已被删除" }
+                        dao.update(saved)
+                        editingId
+                    } else {
+                        dao.insert(saved)
+                    }
+                    val finalRun = saved.copy(id = id)
+                    ScheduleManager.schedule(this, finalRun, next)
+                    runOnUiThread {
+                        toast(if (next > 0) "已保存，下次执行：${java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(next))}" else "已保存，任务未启用")
+                        finish()
+                    }
+                } catch (error: Exception) {
+                    runOnUiThread { saveButton.isEnabled = true; toast("保存失败：${error.message}") }
                 }
             }
         }
     }
 
     private fun pickTarget(onPicked: (Int, String) -> Unit) {
-        val api = AutoDroidApi.service(Session.serverUrl)
+        val api = AutoDroidApi.service(ownerServer)
         if (kind == "scenario") {
-            api.listScenarios().enqueue(object : Callback<PaginatedScenarios> {
-                override fun onResponse(
-                    call: Call<PaginatedScenarios>,
-                    response: Response<PaginatedScenarios>,
-                ) {
-                    val items = response.body()?.items ?: emptyList()
-                    showTargetDialog(items.map { it.id to it.name }, onPicked)
-                }
-
-                override fun onFailure(call: Call<PaginatedScenarios>, t: Throwable) {
-                    toast("场景加载失败：${t.message}")
-                }
-            })
+            loadTargetPages({ skip -> api.listScenarios(skip = skip) },
+                { page: PaginatedScenarios -> page.items.map { it.id to it.name } to page.total }, onPicked)
         } else {
-            api.listCases().enqueue(object : Callback<PaginatedCases> {
-                override fun onResponse(
-                    call: Call<PaginatedCases>,
-                    response: Response<PaginatedCases>,
-                ) {
-                    val items = response.body()?.items ?: emptyList()
-                    showTargetDialog(items.map { it.id to it.name }, onPicked)
-                }
-
-                override fun onFailure(call: Call<PaginatedCases>, t: Throwable) {
-                    toast("用例加载失败：${t.message}")
-                }
-            })
+            loadTargetPages({ skip -> api.listCases(skip = skip) },
+                { page: PaginatedCases -> page.items.map { it.id to it.name } to page.total }, onPicked)
         }
+    }
+
+    private fun <P> loadTargetPages(request: (Int) -> Call<P>, unpack: (P) -> Pair<List<Pair<Int, String>>, Int>,
+                                    onPicked: (Int, String) -> Unit) {
+        cancelTargetLoad?.invoke()
+        val button = findViewById<Button>(R.id.btn_target)
+        val label = button.text
+        val pager = PageLoader(request, unpack)
+        cancelTargetLoad = { pager.cancel() }
+        pager.onChanged = {
+            if (!isFinishing && !isDestroyed) {
+                button.isEnabled = !pager.loading && !pager.hasMore
+                if (pager.loading) button.text = "加载目标…（已加载 ${pager.items.size}）"
+                else if (pager.error != null) {
+                    button.isEnabled = true; button.text = label; toast(pager.error!!)
+                } else if (pager.hasMore) pager.loadMore()
+                else {
+                    button.text = label; cancelTargetLoad = null
+                    showTargetDialog(pager.items, onPicked)
+                }
+            }
+        }
+        pager.refresh()
+    }
+
+    override fun onDestroy() {
+        cancelTargetLoad?.invoke()
+        super.onDestroy()
     }
 
     /** 目标选择弹窗：圆角卡片 + 搜索框 + 列表（选中回填），替代系统 setItems 列表。 */

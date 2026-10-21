@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import org.autojs.autojs6.BuildConfig
+import org.autojs.autodroid.net.ServerAddress
+import org.autojs.autodroid.schedule.ScheduleManager
 
 /**
  * AutoDroid 本地会话与设置（服务端地址 / 登录态 / 设备名 / 通知开关）。
@@ -23,10 +25,14 @@ object Session {
 
     @Volatile
     private var prefs: SharedPreferences? = null
+    private var appContext: Context? = null
+    var onLoginCleared: (() -> Unit)? = null
 
+    @Synchronized
     fun init(context: Context) {
         if (prefs != null) return
         val app = context.applicationContext
+        appContext = app
         prefs = try {
             val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
             EncryptedSharedPreferences.create(
@@ -42,9 +48,12 @@ object Session {
     }
 
     var serverUrl: String
-        get() = prefs?.getString(KEY_SERVER_URL, null)?.takeIf { it.isNotBlank() }
-            ?: BuildConfig.AUTODROID_DEFAULT_SERVER
-        set(value) = prefs?.edit()?.putString(KEY_SERVER_URL, value.trim())?.apply() ?: Unit
+        get() {
+            val value = prefs?.getString(KEY_SERVER_URL, null)?.takeIf { it.isNotBlank() }
+                ?: BuildConfig.AUTODROID_DEFAULT_SERVER
+            return runCatching { ServerAddress.normalize(value) }.getOrDefault(value)
+        }
+        set(value) = prefs?.edit()?.putString(KEY_SERVER_URL, ServerAddress.normalize(value))?.apply() ?: Unit
 
     var token: String?
         get() = prefs?.getString(KEY_TOKEN, null)
@@ -64,5 +73,7 @@ object Session {
 
     fun clearLogin() {
         prefs?.edit()?.remove(KEY_TOKEN)?.apply()
+        appContext?.let { ScheduleManager.suspendAll(it) }
+        onLoginCleared?.invoke()
     }
 }

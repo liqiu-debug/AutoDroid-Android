@@ -2,6 +2,7 @@ package org.autojs.autodroid.net
 
 import android.app.Activity
 import android.app.Application
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -13,11 +14,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.autojs.autodroid.data.Session
+import org.autojs.autodroid.ui.LoginActivity
+import org.autojs.autodroid.ui.MainActivity
 import org.autojs.autojs.AutoJs
 import org.autojs.autojs.core.accessibility.AccessibilityTool
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.lang.ref.WeakReference
 
 /** App heartbeats are independent of ADB. No background service is started solely for presence. */
 object AppPresence : Application.ActivityLifecycleCallbacks {
@@ -29,6 +33,7 @@ object AppPresence : Application.ActivityLifecycleCallbacks {
     private var lastSent = 0L
     private var lastState = ""
     private var lastAccount = ""
+    private var foreground = WeakReference<Activity>(null)
     private val tick = object : Runnable {
         override fun run() { heartbeat(); handler.postDelayed(this, 15_000) }
     }
@@ -37,6 +42,7 @@ object AppPresence : Application.ActivityLifecycleCallbacks {
         if (::app.isInitialized) return
         app = application
         Session.init(app)
+        Session.onLoginCleared = { handler.post { requireLogin() } }
         app.registerActivityLifecycleCallbacks(this)
         handler.post(tick)
     }
@@ -94,8 +100,16 @@ object AppPresence : Application.ActivityLifecycleCallbacks {
     override fun onActivityStarted(activity: Activity) { visible++; heartbeat() }
     override fun onActivityStopped(activity: Activity) { visible = (visible - 1).coerceAtLeast(0) }
     override fun onActivityCreated(activity: Activity, state: Bundle?) = Unit
-    override fun onActivityResumed(activity: Activity) = Unit
-    override fun onActivityPaused(activity: Activity) = Unit
+    private fun requireLogin() {
+        val activity = foreground.get() ?: return
+        if (!Session.token.isNullOrBlank() || activity is LoginActivity || activity is MainActivity ||
+            activity.isFinishing || !activity.javaClass.name.startsWith("org.autojs.autodroid.ui.")) return
+        activity.startActivity(Intent(activity, LoginActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+    }
+
+    override fun onActivityResumed(activity: Activity) { foreground = WeakReference(activity); requireLogin() }
+    override fun onActivityPaused(activity: Activity) { if (foreground.get() === activity) foreground.clear() }
     override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) = Unit
     override fun onActivityDestroyed(activity: Activity) = Unit
 }

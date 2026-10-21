@@ -23,7 +23,11 @@ object RunBridge {
         bundle: ScriptBundle,
         runId: String,
         notify: Boolean,
+        server: String = Session.serverUrl,
+        token: String? = Session.token,
     ): File {
+        require(bundle.format_version == 1 && bundle.manifest?.get("platform")?.asString == "android" &&
+            bundle.precheck?.get("ok")?.asBoolean == true) { "脚本包不是预检通过的 Android 格式" }
         val runtimeJs = bundle.runtime_js?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("脚本包缺少 runtime.js")
         val mainJs = bundle.main_js?.takeIf { it.isNotBlank() }
@@ -33,11 +37,12 @@ object RunBridge {
         if (dir.exists()) dir.deleteRecursively()
         check(dir.mkdirs()) { "无法创建运行目录: $dir" }
 
-        File(dir, "manifest.json").writeText(gson.toJson(bundle.manifest ?: "{}"))
+        File(dir, "manifest.json").writeText(gson.toJson(bundle.manifest))
         File(dir, "runtime.js").writeText(runtimeJs)
         File(dir, "main.js").writeText(mainJs)
 
         for (entry in bundle.case_files) {
+            validatePath(entry.path)
             val file = File(dir, entry.path)
             file.parentFile?.mkdirs()
             file.writeText(entry.content)
@@ -46,7 +51,10 @@ object RunBridge {
         if (bundle.assets.isNotEmpty()) {
             val assetsDir = File(dir, "assets").apply { mkdirs() }
             for ((name, base64) in bundle.assets) {
-                File(assetsDir, name).writeBytes(Base64.decode(base64, Base64.DEFAULT))
+                validatePath(name)
+                val asset = File(assetsDir, name)
+                asset.parentFile?.mkdirs()
+                asset.writeBytes(Base64.decode(base64, Base64.DEFAULT))
             }
         }
 
@@ -54,14 +62,19 @@ object RunBridge {
         File(dir, "task_config.json").writeText(
             gson.toJson(
                 mapOf(
-                    "server" to Session.serverUrl,
-                    "token" to Session.token,
+                    "server" to server,
+                    "token" to token,
                     "runId" to runId,
                     "notify" to notify,
                 )
             )
         )
         return dir
+    }
+
+    private fun validatePath(path: String) {
+        require(path.isNotBlank() && !File(path).isAbsolute && '\\' !in path && '\u0000' !in path &&
+            path.split('/').none { it == ".." || it == "." }) { "脚本包包含非法文件路径" }
     }
 
     /**
