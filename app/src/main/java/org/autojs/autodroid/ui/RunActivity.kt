@@ -58,6 +58,7 @@ class RunActivity : AppCompatActivity() {
         statusText = findViewById(R.id.text_status)
         resultText = findViewById(R.id.text_result)
         notifySwitch = findViewById(R.id.switch_notify)
+        AdSwitchTint.apply(notifySwitch)
         notifySwitch.isChecked = Session.notifyDefault
 
         progressBar = findViewById(R.id.progress_run)

@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,7 +26,7 @@
                 android:layout_gravity="center_horizontal"
                 android:text="AutoDroid"
                 android:textColor="@color/ad_primary"
-                android:textSize="24sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -51,7 +51,7 @@
                 style="@style/AdInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:hint="http://host:8000"
                 android:inputType="textUri"
                 android:maxLines="1" />
@@ -69,7 +69,7 @@
                 style="@style/AdInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:hint="请输入账号"
                 android:inputType="text"
                 android:maxLines="1" />
@@ -87,7 +87,7 @@
                 style="@style/AdInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:hint="请输入密码"
                 android:inputType="textPassword"
                 android:maxLines="1" />

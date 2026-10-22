@@ -76,6 +76,7 @@ class ScheduleListActivity : AppCompatActivity() {
 
         val listView = findViewById<ListView>(R.id.list_schedules)
         listView.adapter = adapter
+        emptyStateView = AdEmptyState.bind(listView, title = "暂无定时任务", hint = "点上方「新建定时任务」创建", iconRes = R.drawable.ic_ad_schedules)
         PullDownMoveHelper.attach(swipeRefresh, listView)
 
         // 顶部区（新建入口）作为列表 header：下拉刷新与列表滚动时一起移动
@@ -106,18 +107,20 @@ class ScheduleListActivity : AppCompatActivity() {
         }
         listView.setOnItemLongClickListener { _, _, position, _ ->
             val run = adapter.getItem(position - listView.headerViewsCount)
-            AlertDialog.Builder(this)
-                .setTitle("删除定时任务")
-                .setMessage("确定删除「${run.name}」？")
-                .setPositiveButton("删除") { _, _ ->
-                    AppDatabase.io.execute {
-                        ScheduleManager.cancel(this, run.id)
-                        AppDatabase.get(this).scheduledRuns().delete(run)
-                        runOnUiThread { reload() }
-                    }
+            AdGuideDialog.show(
+                this,
+                title = "删除定时任务",
+                message = "确定删除「${run.name}」？",
+                positiveText = "删除",
+                negativeText = "取消",
+                positiveColorRes = R.color.ad_fail,
+            ) {
+                AppDatabase.io.execute {
+                    ScheduleManager.cancel(this, run.id)
+                    AppDatabase.get(this).scheduledRuns().delete(run)
+                    runOnUiThread { reload() }
                 }
-                .setNegativeButton("取消", null)
-                .show()
+            }
             true
         }
     }
@@ -129,13 +132,16 @@ class ScheduleListActivity : AppCompatActivity() {
         exactHint.visibility = if (exact) View.GONE else View.VISIBLE
     }
 
+    private var emptyStateView: View? = null
+
     private fun reload() {
         AppDatabase.io.execute {
             val runs = AppDatabase.get(this).scheduledRuns().forAccount(Session.serverUrl, Session.username.orEmpty())
             runOnUiThread {
                 if (swipeRefresh.isRefreshing) swipeRefresh.isRefreshing = false
                 adapter.setItems(runs)
-                statusText.text = if (runs.isEmpty()) "暂无定时任务，点上方按钮新建" else "共 ${runs.size} 个定时任务（长按删除）"
+                statusText.text = if (runs.isEmpty()) "" else "共 ${runs.size} 个定时任务（长按删除）"
+                emptyStateView?.visibility = if (runs.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }
@@ -184,6 +190,7 @@ class ScheduleAdapter(
             "${if (run.kind == "scenario") "场景" else "用例"}：${run.targetName} · $repeatText$nextText"
 
         val switch = view.findViewById<Switch>(R.id.switch_enabled)
+        AdSwitchTint.apply(switch)
         switch.setOnCheckedChangeListener(null)
         switch.isChecked = run.enabled
         switch.setOnCheckedChangeListener { _, checked -> onToggle(run, checked) }

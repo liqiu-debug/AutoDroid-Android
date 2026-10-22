@@ -4,7 +4,7 @@
     <!-- 页面主操作按钮（登录/运行/保存） -->
     <style name="AdButtonPrimary" parent="android:Widget.Material.Button">
         <item name="android:background">@drawable/ad_btn_primary</item>
-        <item name="android:textColor">@color/ad_surface</item>
+        <item name="android:textColor">@color/ad_on_primary</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:minHeight">44dp</item>
@@ -17,7 +17,7 @@
 
     <!-- 次级按钮（表单选择类） -->
     <style name="AdButtonSecondary" parent="android:Widget.Material.Button">
-        <item name="android:background">@drawable/ad_bg_input</item>
+        <item name="android:background">@drawable/ad_bg_button_secondary</item>
         <item name="android:textColor">@color/ad_text</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">false</item>
@@ -31,7 +31,7 @@
     <!-- 列表行内小按钮（运行） -->
     <style name="AdButtonSmall" parent="android:Widget.Material.Button">
         <item name="android:background">@drawable/ad_btn_primary</item>
-        <item name="android:textColor">@color/ad_surface</item>
+        <item name="android:textColor">@color/ad_on_primary</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:minHeight">32dp</item>
@@ -89,7 +89,7 @@
     <style name="AdHeaderTitle">
         <item name="android:textColor">@color/ad_text</item>
         <item name="android:textSize">17sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">end</item>
     </style>
@@ -109,5 +109,20 @@
         <item name="android:paddingEnd">8dp</item>
         <item name="android:paddingTop">3dp</item>
         <item name="android:paddingBottom">3dp</item>
+    </style>
+
+    <!-- 弹窗标题 / 正文 -->
+    <style name="AdDialogTitle">
+        <item name="android:textColor">@color/ad_text</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="AdDialogBody">
+        <item name="android:textColor">@color/ad_text_secondary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:lineSpacingExtra">4dp</item>
     </style>
 </resources>

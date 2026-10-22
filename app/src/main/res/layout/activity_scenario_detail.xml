@@ -28,9 +28,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="10dp"
         android:text="包含用例（按顺序执行）"
-        android:textColor="@color/ad_text_secondary"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        style="@style/AdSectionTitle" />
 
     <ListView
         android:id="@+id/list_cases"

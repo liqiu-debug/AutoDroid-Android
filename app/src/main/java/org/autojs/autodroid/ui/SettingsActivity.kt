@@ -10,8 +10,12 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.ServerAddress
+import org.autojs.autodroid.update.AppUpdateFlow
+import org.autojs.autojs6.BuildConfig
 import org.autojs.autojs6.R
 
 /**
@@ -29,6 +33,7 @@ class SettingsActivity : AppCompatActivity() {
         val serverInput = findViewById<EditText>(R.id.input_server)
         val deviceNameInput = findViewById<EditText>(R.id.input_device_name)
         val notifySwitch = findViewById<Switch>(R.id.switch_notify)
+        AdSwitchTint.apply(notifySwitch)
         val accessibilityText = findViewById<TextView>(R.id.text_accessibility)
 
         serverInput.setText(Session.serverUrl)
@@ -64,12 +69,19 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        findViewById<Button>(R.id.btn_check_update).setOnClickListener {
+            lifecycleScope.launch { AppUpdateFlow.checkAndPrompt(this@SettingsActivity) }
+        }
+
         findViewById<Button>(R.id.btn_logout).setOnClickListener {
             org.autojs.autodroid.net.AppPresence.logout()
             toast("已退出登录")
             startActivity(Intent(this, LoginActivity::class.java))
             finishAffinity()
         }
+
+        findViewById<TextView>(R.id.text_version).text =
+            "AutoDroid · 执行引擎 ${BuildConfig.VERSION_NAME}（${BuildConfig.VERSION_CODE}）"
 
         refreshAccessibilityState(accessibilityText)
         refreshBatteryState(findViewById(R.id.btn_battery))

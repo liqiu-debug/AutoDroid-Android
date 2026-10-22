@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主按钮文字：可用白色，禁用时灰色（避免禁用态白字落在浅底上不可见） -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="@color/ad_text_tertiary" />
+    <item android:color="@color/ad_surface" />
+</selector>

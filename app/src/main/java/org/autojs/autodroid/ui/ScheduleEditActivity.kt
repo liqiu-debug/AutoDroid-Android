@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.RadioGroup
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -50,12 +49,19 @@ class ScheduleEditActivity : AppCompatActivity() {
         AdHeader.bind(this, if (editingId > 0) "编辑定时任务" else "新建定时任务")
 
         val nameInput = findViewById<EditText>(R.id.input_name)
-        val kindGroup = findViewById<RadioGroup>(R.id.radio_kind)
+        val kindChipCase = findViewById<TextView>(R.id.chip_kind_case)
+        val kindChipScenario = findViewById<TextView>(R.id.chip_kind_scenario)
+        fun renderKindChips() {
+            kindChipCase.isSelected = kind == "case"
+            kindChipScenario.isSelected = kind == "scenario"
+        }
+        renderKindChips()
         val targetButton = findViewById<Button>(R.id.btn_target)
         val timeButton = findViewById<Button>(R.id.btn_time)
         val intervalInput = findViewById<EditText>(R.id.input_interval)
         val onceButton = findViewById<Button>(R.id.btn_once)
         val notifySwitch = findViewById<Switch>(R.id.switch_notify)
+        AdSwitchTint.apply(notifySwitch)
         val saveButton = findViewById<Button>(R.id.btn_save)
 
         val repeatChips = listOf(
@@ -126,13 +132,17 @@ class ScheduleEditActivity : AppCompatActivity() {
         }
         refreshLabels()
 
-        kindGroup.setOnCheckedChangeListener { _, checkedId ->
+        fun onKindClick(picked: String) {
+            if (kind == picked) return // 重击已选中项不应清空已选目标（对齐原 RadioGroup 行为）
             cancelTargetLoad?.invoke(); cancelTargetLoad = null; targetButton.isEnabled = true
-            kind = if (checkedId == R.id.radio_scenario) "scenario" else "case"
+            kind = picked
             targetId = -1
             targetName = ""
+            renderKindChips()
             refreshLabels()
         }
+        kindChipCase.setOnClickListener { onKindClick("case") }
+        kindChipScenario.setOnClickListener { onKindClick("scenario") }
 
         targetButton.setOnClickListener { pickTarget { id, name -> targetId = id; targetName = name; refreshLabels() } }
 
@@ -172,7 +182,7 @@ class ScheduleEditActivity : AppCompatActivity() {
                     }
                     nameInput.setText(run.name)
                     kind = run.kind
-                    kindGroup.check(if (run.kind == "scenario") R.id.radio_scenario else R.id.radio_case)
+                    renderKindChips()
                     targetId = run.targetId
                     targetName = run.targetName
                     repeatType = run.repeatType

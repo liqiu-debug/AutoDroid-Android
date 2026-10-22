@@ -15,14 +15,19 @@
         android:layout_marginTop="6dp"
         android:layout_weight="1">
 
-        <ListView
-            android:id="@+id/list_reports"
+        <org.autojs.autodroid.ui.NestedScrollFrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="@null"
-            android:dividerHeight="0dp"
-            android:paddingBottom="8dp"
-            android:scrollbars="none" />
+            android:layout_height="match_parent">
+
+            <ListView
+                android:id="@+id/list_reports"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="@null"
+                android:dividerHeight="0dp"
+                android:paddingBottom="8dp"
+                android:scrollbars="none" />
+        </org.autojs.autodroid.ui.NestedScrollFrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <TextView

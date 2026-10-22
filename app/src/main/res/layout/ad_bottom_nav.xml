@@ -6,11 +6,6 @@
     android:background="@color/ad_surface"
     android:orientation="vertical">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/ad_border" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -29,8 +24,8 @@
 
             <ImageView
                 android:id="@+id/nav_icon_cases"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_ad_cases" />
 
@@ -38,10 +33,10 @@
                 android:id="@+id/nav_label_cases"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="用例"
                 android:textColor="@color/ad_idle"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -57,8 +52,8 @@
 
             <ImageView
                 android:id="@+id/nav_icon_scenarios"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_ad_scenarios" />
 
@@ -66,10 +61,10 @@
                 android:id="@+id/nav_label_scenarios"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="场景"
                 android:textColor="@color/ad_idle"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -85,8 +80,8 @@
 
             <ImageView
                 android:id="@+id/nav_icon_reports"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_ad_reports" />
 
@@ -94,10 +89,10 @@
                 android:id="@+id/nav_label_reports"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="报告"
                 android:textColor="@color/ad_idle"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -113,8 +108,8 @@
 
             <ImageView
                 android:id="@+id/nav_icon_schedules"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_ad_schedules" />
 
@@ -122,10 +117,10 @@
                 android:id="@+id/nav_label_schedules"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="定时"
                 android:textColor="@color/ad_idle"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -141,8 +136,8 @@
 
             <ImageView
                 android:id="@+id/nav_icon_settings"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_ad_settings" />
 
@@ -150,10 +145,10 @@
                 android:id="@+id/nav_label_settings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="设置"
                 android:textColor="@color/ad_idle"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

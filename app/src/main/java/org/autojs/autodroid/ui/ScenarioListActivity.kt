@@ -66,7 +66,7 @@ class ScenarioListActivity : AppCompatActivity() {
             request = { skip -> AutoDroidApi.service(Session.serverUrl).listScenarios(skip = skip, keyword = loadedKeyword) },
             unpack = { it.items to it.total },
         )
-        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无场景", { "共 $it 个场景" }, adapter::setItems)
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无场景", { "共 $it 个场景" }, adapter::setItems, emptyHint = "新建场景后会出现在这里", emptyIcon = R.drawable.ic_ad_scenarios)
 
         listView.setOnItemClickListener { _, _, position, _ ->
             val index = position - listView.headerViewsCount

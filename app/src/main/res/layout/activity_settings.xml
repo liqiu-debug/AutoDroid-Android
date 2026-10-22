@@ -143,6 +143,14 @@
                     android:text="打开运行引擎控制台（高级）" />
 
                 <Button
+                    android:id="@+id/btn_check_update"
+                    style="@style/AdButtonSecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="8dp"
+                    android:text="检查更新" />
+
+                <Button
                     android:id="@+id/btn_logout"
                     style="@style/AdButtonSecondary"
                     android:layout_width="match_parent"
@@ -151,10 +159,11 @@
                     android:text="退出登录" />
 
                 <TextView
+                    android:id="@+id/text_version"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="AutoDroid · 执行引擎 6.7.0（冻结基线）"
+                    android:text="AutoDroid · 执行引擎"
                     android:textColor="@color/ad_text_tertiary"
                     android:textSize="12sp" />
             </LinearLayout>

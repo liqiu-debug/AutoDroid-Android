@@ -45,7 +45,7 @@ class ReportListActivity : AppCompatActivity() {
             request = { skip -> AutoDroidApi.service(Session.serverUrl).listExecutions(skip = skip) },
             unpack = { it.items to it.total },
         )
-        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无执行记录", { "共 $it 条执行记录" }, adapter::setItems)
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无执行记录", { "共 $it 条执行记录" }, adapter::setItems, emptyHint = "执行完成后会在这里生成报告", emptyIcon = R.drawable.ic_ad_reports)
         listView.setOnItemClickListener { _, _, position, _ ->
             if (position !in 0 until adapter.count) return@setOnItemClickListener
             val item = adapter.getItem(position)

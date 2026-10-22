@@ -38,7 +38,7 @@
                     style="@style/AdInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="8dp"
                     android:hint="可留空，默认使用目标名称"
                     android:inputType="text"
                     android:maxLines="1" />
@@ -51,29 +51,30 @@
                     android:textColor="@color/ad_text_secondary"
                     android:textSize="13sp" />
 
-                <RadioGroup
-                    android:id="@+id/radio_kind"
+                <LinearLayout
+                    android:id="@+id/chips_kind"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:orientation="horizontal">
 
-                    <RadioButton
-                        android:id="@+id/radio_case"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="用例"
-                        android:textColor="@color/ad_text" />
+                    <TextView
+                        android:id="@+id/chip_kind_case"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="用例" />
 
-                    <RadioButton
-                        android:id="@+id/radio_scenario"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="场景"
-                        android:textColor="@color/ad_text" />
-                </RadioGroup>
+                    <TextView
+                        android:id="@+id/chip_kind_scenario"
+                        style="@style/AdChipChoice"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:text="场景" />
+                </LinearLayout>
 
                 <Button
                     android:id="@+id/btn_target"

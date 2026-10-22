@@ -30,7 +30,7 @@ object AdBottomNav {
         for (tab in TABS) {
             val container = activity.findViewById<ViewGroup>(tab.tabId) ?: continue
             val selected = tab.key == currentKey
-            tint(container, if (selected) selectedColor else idleColor, selected)
+            tint(container, if (selected) selectedColor else idleColor)
             if (!selected) {
                 container.setOnClickListener {
                     activity.startActivity(
@@ -44,15 +44,12 @@ object AdBottomNav {
         }
     }
 
-    private fun tint(container: ViewGroup, color: Int, bold: Boolean) {
+    private fun tint(container: ViewGroup, color: Int) {
         for (index in 0 until container.childCount) {
             when (val child = container.getChildAt(index)) {
                 is ImageView -> child.setColorFilter(color)
-                is TextView -> {
-                    child.setTextColor(color)
-                    child.setTypeface(null, if (bold) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
-                }
-                is ViewGroup -> tint(child, color, bold)
+                is TextView -> child.setTextColor(color)
+                is ViewGroup -> tint(child, color)
                 else -> Unit
             }
         }

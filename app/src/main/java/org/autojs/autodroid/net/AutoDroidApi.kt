@@ -105,6 +105,21 @@ data class ExecutionItem(
 
 data class PaginatedExecutions(val total: Int = 0, val items: List<ExecutionItem> = emptyList())
 
+/** 平台安装包记录（App 包管理），用于检查更新。 */
+data class PackageItem(
+    val id: Int = 0,
+    val app_name: String? = null,
+    val package_name: String? = null,
+    val version_name: String? = null,
+    val version_code: String? = null,
+    val file_size: Double = 0.0,
+    val is_latest: Boolean = false,
+    val upload_time: String? = null,
+    val uploader_name: String? = null,
+)
+
+data class PaginatedPackages(val total: Int = 0, val items: List<PackageItem> = emptyList())
+
 data class ScriptFileEntry(val path: String = "", val content: String = "")
 
 /** 平台下发的可执行脚本包（与 zip 导出同源）。 */
@@ -169,6 +184,16 @@ interface ApiService {
 
     @GET("reports/executions/{id}/download")
     fun downloadReport(@Path("id") executionId: Long): Call<ResponseBody>
+
+    /** 安装包查询（检查更新）：package_name + latest_only 即"本应用最新包"。 */
+    @GET("packages/")
+    fun listPackages(
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 1,
+        @Query("package_name") packageName: String? = null,
+        @Query("platform") platform: String? = null,
+        @Query("latest_only") latestOnly: Boolean = false,
+    ): Call<PaginatedPackages>
 
     @GET("app-runs/cases/{id}/script")
     fun caseScript(

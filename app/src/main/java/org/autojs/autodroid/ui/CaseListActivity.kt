@@ -80,7 +80,7 @@ class CaseListActivity : AppCompatActivity() {
             request = { skip -> api().listCases(skip = skip, keyword = loadedKeyword, folderId = loadedFolderId) },
             unpack = { it.items to it.total },
         )
-        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无用例", { "共 $it 条用例" }, adapter::setItems)
+        bindPagedList(listView, pager, statusText, swipeRefresh, "暂无用例", { "共 $it 条用例" }, adapter::setItems, emptyHint = "新建用例后会出现在这里", emptyIcon = R.drawable.ic_ad_cases)
 
         listView.setOnItemClickListener { _, _, position, _ ->
             val index = position - listView.headerViewsCount
