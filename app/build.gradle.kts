@@ -35,8 +35,10 @@ val globalApplicationId = "org.autojs.autojs6"
 val runnerApplicationId = "com.autodroid.runner"
 
 // AutoDroid：默认平台地址（可在 App 设置页随时修改）。
-// 取值顺序：gradle 属性 / local.properties 的 autodroid.server > 占位默认值，
-// 这样本机内网地址不会进入仓库（local.properties 已被 .gitignore 忽略）。
+// 取值顺序：gradle 属性 / local.properties 的 autodroid.server > 空。
+// 发布包不携带任何默认服务地址：不设置 autodroid.server 时默认为空，
+// 由使用者在登录页自行填写；本机开发地址仅经 local.properties 注入
+//（该文件已被 .gitignore 忽略，不会进入仓库）。
 val autodroidDefaultServer: String = run {
     val localProps = Properties()
     val localPropsFile = rootProject.file("local.properties")
@@ -44,7 +46,7 @@ val autodroidDefaultServer: String = run {
         localPropsFile.inputStream().use { stream: InputStream -> localProps.load(stream) }
     }
     val fromGradleProp: String? = project.findProperty("autodroid.server") as String?
-    fromGradleProp ?: localProps.getProperty("autodroid.server") ?: "http://127.0.0.1:8000"
+    fromGradleProp ?: localProps.getProperty("autodroid.server") ?: ""
 }
 
 val flavorDimension = "channel"
