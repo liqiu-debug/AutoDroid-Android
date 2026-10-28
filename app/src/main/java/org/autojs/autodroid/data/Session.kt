@@ -68,7 +68,7 @@ object Session {
         set(value) = prefs?.edit()?.putString(KEY_DEVICE_NAME, value.trim())?.apply() ?: Unit
 
     var notifyDefault: Boolean
-        get() = prefs?.getBoolean(KEY_NOTIFY_DEFAULT, true) ?: true
+        get() = prefs?.getBoolean(KEY_NOTIFY_DEFAULT, false) ?: false
         set(value) = prefs?.edit()?.putBoolean(KEY_NOTIFY_DEFAULT, value)?.apply() ?: Unit
 
     fun clearLogin() {
