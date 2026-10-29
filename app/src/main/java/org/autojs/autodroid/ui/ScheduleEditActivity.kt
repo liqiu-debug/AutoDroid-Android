@@ -269,10 +269,10 @@ class ScheduleEditActivity : AppCompatActivity() {
         val api = AutoDroidApi.service(ownerServer)
         if (kind == "scenario") {
             loadTargetPages({ skip -> api.listScenarios(skip = skip) },
-                { page: PaginatedScenarios -> page.items.map { it.id to it.name } to page.total }, onPicked)
+                { page: PaginatedScenarios -> (page.items ?: emptyList()).map { it.id to (it.name ?: "未命名") } to page.total }, onPicked)
         } else {
             loadTargetPages({ skip -> api.listCases(skip = skip) },
-                { page: PaginatedCases -> page.items.map { it.id to it.name } to page.total }, onPicked)
+                { page: PaginatedCases -> (page.items ?: emptyList()).map { it.id to (it.name ?: "未命名") } to page.total }, onPicked)
         }
     }
 

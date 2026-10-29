@@ -78,7 +78,7 @@ class CaseListActivity : AppCompatActivity() {
 
         pager = PageLoader(
             request = { skip -> api().listCases(skip = skip, keyword = loadedKeyword, folderId = loadedFolderId) },
-            unpack = { it.items to it.total },
+            unpack = { (it.items ?: emptyList()) to it.total },
         )
         bindPagedList(listView, pager, statusText, swipeRefresh, "暂无用例", { "共 $it 条用例" }, adapter::setItems, emptyHint = "新建用例后会出现在这里", emptyIcon = R.drawable.ic_ad_cases)
 
@@ -138,7 +138,7 @@ class CaseListActivity : AppCompatActivity() {
             override fun onResponse(call: Call<FolderTreeResponse>, response: Response<FolderTreeResponse>) {
                 val body = response.body() ?: return
                 val choices = mutableListOf<FolderChoice>()
-                flattenFolders(body.tree, 0, choices)
+                flattenFolders(body.tree ?: emptyList(), 0, choices)
                 // 注意: 树内只包含已归目录的用例, "全部用例" 不带计数以免误导
                 folderChoices = listOf(FolderChoice("全部用例", null, 0)) + choices
             }
@@ -248,7 +248,7 @@ class CaseAdapter(
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.item_case, parent, false)
         val item = items[position]
-        view.findViewById<TextView>(R.id.text_name).text = item.name
+        view.findViewById<TextView>(R.id.text_name).text = item.name ?: "未命名"
         val subtitle = buildString {
             append("id=${item.id}")
             item.last_run_status?.takeIf { it.isNotBlank() }?.let { append(" · 最近: $it") }
