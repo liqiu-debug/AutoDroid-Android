@@ -22,24 +22,26 @@ data class LoginResponse(val access_token: String? = null, val token_type: Strin
 
 data class CaseItem(
     val id: Int,
-    val name: String,
+    // Gson 对 JSON null 会绕过 Kotlin 默认值把非空字段置 null（缺字段时 Unsafe 实例化
+    // 同样得 null），一律声明可空、由展示层兜底
+    val name: String? = null,
     val description: String? = null,
     val folder_id: Int? = null,
     val last_run_status: String? = null,
     val last_run_time: String? = null,
 )
 
-data class PaginatedCases(val total: Int = 0, val items: List<CaseItem> = emptyList())
+data class PaginatedCases(val total: Int = 0, val items: List<CaseItem>? = emptyList())
 
 data class ScenarioItem(
     val id: Int,
-    val name: String,
+    val name: String? = null,
     val description: String? = null,
     val folder_id: Int? = null,
     val last_run_status: String? = null,
 )
 
-data class PaginatedScenarios(val total: Int = 0, val items: List<ScenarioItem> = emptyList())
+data class PaginatedScenarios(val total: Int = 0, val items: List<ScenarioItem>? = emptyList())
 
 /** 标准步骤（用例详情展示用）。 */
 data class CaseStepItem(
@@ -78,7 +80,7 @@ data class FolderNode(
  * 整体解析会失败（JsonSyntaxException），因此不声明该字段（Gson 会忽略未声明字段）；
  * 目录内用例数由 tree 的叶子节点递归统计。
  */
-data class FolderTreeResponse(val tree: List<FolderNode> = emptyList())
+data class FolderTreeResponse(val tree: List<FolderNode>? = emptyList())
 
 data class DeviceRegisterResponse(val device_serial: String? = null)
 
@@ -103,7 +105,7 @@ data class ExecutionItem(
     val duration: Double? = null,
 )
 
-data class PaginatedExecutions(val total: Int = 0, val items: List<ExecutionItem> = emptyList())
+data class PaginatedExecutions(val total: Int = 0, val items: List<ExecutionItem>? = emptyList())
 
 /** 平台安装包记录（App 包管理），用于检查更新。 */
 data class PackageItem(
@@ -118,7 +120,7 @@ data class PackageItem(
     val uploader_name: String? = null,
 )
 
-data class PaginatedPackages(val total: Int = 0, val items: List<PackageItem> = emptyList())
+data class PaginatedPackages(val total: Int = 0, val items: List<PackageItem>? = emptyList())
 
 data class ScriptFileEntry(val path: String = "", val content: String = "")
 
@@ -130,8 +132,8 @@ data class ScriptBundle(
     val manifest: com.google.gson.JsonObject? = null,
     val runtime_js: String? = null,
     val main_js: String? = null,
-    val case_files: List<ScriptFileEntry> = emptyList(),
-    val assets: Map<String, String> = emptyMap(),
+    val case_files: List<ScriptFileEntry>? = emptyList(),
+    val assets: Map<String, String>? = emptyMap(),
     val precheck: com.google.gson.JsonObject? = null,
 )
 

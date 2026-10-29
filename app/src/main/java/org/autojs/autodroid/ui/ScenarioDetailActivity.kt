@@ -62,7 +62,7 @@ class ScenarioDetailActivity : AppCompatActivity() {
             .listCases(limit = 500)
             .enqueue(object : Callback<PaginatedCases> {
                 override fun onResponse(call: Call<PaginatedCases>, response: Response<PaginatedCases>) {
-                    caseNames = (response.body()?.items ?: emptyList()).associate { it.id to it.name }
+                    caseNames = (response.body()?.items ?: emptyList()).associate { it.id to (it.name ?: "未命名") }
                     onDone()
                 }
 

@@ -5,6 +5,12 @@ import android.util.Base64
 import com.google.gson.Gson
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.ScriptBundle
+import org.autojs.autodroid.util.asArrayOrNull
+import org.autojs.autodroid.util.asBooleanOrNull
+import org.autojs.autodroid.util.asDoubleOrNull
+import org.autojs.autodroid.util.asIntOrNull
+import org.autojs.autodroid.util.asObjectOrNull
+import org.autojs.autodroid.util.asStringOrNull
 import java.io.File
 
 /**
@@ -26,8 +32,8 @@ object RunBridge {
         server: String = Session.serverUrl,
         token: String? = Session.token,
     ): File {
-        require(bundle.format_version == 1 && bundle.manifest?.get("platform")?.asString == "android" &&
-            bundle.precheck?.get("ok")?.asBoolean == true) { "脚本包不是预检通过的 Android 格式" }
+        require(bundle.format_version == 1 && bundle.manifest?.get("platform").asStringOrNull() == "android" &&
+            bundle.precheck?.get("ok").asBooleanOrNull() == true) { "脚本包不是预检通过的 Android 格式" }
         val runtimeJs = bundle.runtime_js?.takeIf { it.isNotBlank() }
             ?: throw IllegalStateException("脚本包缺少 runtime.js")
         val mainJs = bundle.main_js?.takeIf { it.isNotBlank() }
@@ -41,16 +47,18 @@ object RunBridge {
         File(dir, "runtime.js").writeText(runtimeJs)
         File(dir, "main.js").writeText(mainJs)
 
-        for (entry in bundle.case_files) {
-            validatePath(entry.path)
-            val file = File(dir, entry.path)
+        for (entry in bundle.case_files ?: emptyList()) {
+            val path = entry.path.orEmpty()
+            validatePath(path)
+            val file = File(dir, path)
             file.parentFile?.mkdirs()
-            file.writeText(entry.content)
+            file.writeText(entry.content.orEmpty())
         }
 
-        if (bundle.assets.isNotEmpty()) {
+        val assets = bundle.assets ?: emptyMap()
+        if (assets.isNotEmpty()) {
             val assetsDir = File(dir, "assets").apply { mkdirs() }
-            for ((name, base64) in bundle.assets) {
+            for ((name, base64) in assets) {
                 validatePath(name)
                 val asset = File(assetsDir, name)
                 asset.parentFile?.mkdirs()
@@ -117,32 +125,35 @@ object RunBridge {
     )
 
     fun parseReport(reportFile: File): RunResult {
-        val root = com.google.gson.JsonParser.parseString(reportFile.readText()).asJsonObject
-        val success = root.get("success")?.asBoolean ?: false
+        val root = com.google.gson.JsonParser.parseString(reportFile.readText()).asObjectOrNull()
+            ?: return RunResult(success = false, steps = emptyList(), uploadOk = false, executionId = null, reportId = null)
+        val success = root.get("success").asBooleanOrNull() ?: false
 
         val steps = mutableListOf<RunStep>()
-        root.getAsJsonArray("cases")?.forEach { caseElement ->
-            caseElement.asJsonObject.getAsJsonArray("steps")?.forEach { stepElement ->
-                val step = stepElement.asJsonObject
+        root.get("cases").asArrayOrNull()?.forEach { caseElement ->
+            caseElement.asObjectOrNull()?.get("steps").asArrayOrNull()?.forEach { stepElement ->
+                val step = stepElement.asObjectOrNull() ?: return@forEach
                 steps.add(
                     RunStep(
-                        order = step.get("order")?.asInt ?: 0,
-                        action = step.get("action")?.asString ?: "",
-                        status = step.get("status")?.asString ?: "",
-                        duration = step.get("duration")?.asDouble ?: 0.0,
-                        error = step.get("error")?.takeIf { !it.isJsonNull }?.asString,
+                        order = step.get("order").asIntOrNull() ?: 0,
+                        action = step.get("action").asStringOrNull() ?: "",
+                        status = step.get("status").asStringOrNull() ?: "",
+                        duration = step.get("duration").asDoubleOrNull() ?: 0.0,
+                        error = step.get("error").asStringOrNull(),
                     )
                 )
             }
         }
 
-        val upload = root.getAsJsonObject("upload_response")
+        // upload_response 常为 null（未上报/上报未完成）：getAsJsonObject 会把 JsonNull
+        // 强转 JsonObject 直接崩，这里按类型取。
+        val upload = root.get("upload_response").asObjectOrNull()
         return RunResult(
             success = success,
             steps = steps,
             uploadOk = upload != null,
-            executionId = upload?.get("execution_id")?.asInt,
-            reportId = upload?.get("report_id")?.takeIf { !it.isJsonNull }?.asString,
+            executionId = upload?.get("execution_id").asIntOrNull(),
+            reportId = upload?.get("report_id").asStringOrNull(),
         )
     }
 }

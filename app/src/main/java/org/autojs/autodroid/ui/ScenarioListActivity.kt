@@ -64,7 +64,7 @@ class ScenarioListActivity : AppCompatActivity() {
 
         pager = PageLoader(
             request = { skip -> AutoDroidApi.service(Session.serverUrl).listScenarios(skip = skip, keyword = loadedKeyword) },
-            unpack = { it.items to it.total },
+            unpack = { (it.items ?: emptyList()) to it.total },
         )
         bindPagedList(listView, pager, statusText, swipeRefresh, "暂无场景", { "共 $it 个场景" }, adapter::setItems, emptyHint = "新建场景后会出现在这里", emptyIcon = R.drawable.ic_ad_scenarios)
 
@@ -133,7 +133,7 @@ class ScenarioAdapter(
         val view = convertView ?: LayoutInflater.from(context)
             .inflate(R.layout.item_case, parent, false)
         val item = items[position]
-        view.findViewById<TextView>(R.id.text_name).text = item.name
+        view.findViewById<TextView>(R.id.text_name).text = item.name ?: "未命名"
         val subtitle = buildString {
             append("id=${item.id}")
             item.last_run_status?.takeIf { it.isNotBlank() }?.let { append(" · 最近: $it") }

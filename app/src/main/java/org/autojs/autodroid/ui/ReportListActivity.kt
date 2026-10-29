@@ -43,7 +43,7 @@ class ReportListActivity : AppCompatActivity() {
         listView.adapter = adapter
         pager = PageLoader(
             request = { skip -> AutoDroidApi.service(Session.serverUrl).listExecutions(skip = skip) },
-            unpack = { it.items to it.total },
+            unpack = { (it.items ?: emptyList()) to it.total },
         )
         bindPagedList(listView, pager, statusText, swipeRefresh, "暂无执行记录", { "共 $it 条执行记录" }, adapter::setItems, emptyHint = "执行完成后会在这里生成报告", emptyIcon = R.drawable.ic_ad_reports)
         listView.setOnItemClickListener { _, _, position, _ ->

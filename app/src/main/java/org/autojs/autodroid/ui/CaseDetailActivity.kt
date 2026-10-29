@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import org.autojs.autodroid.data.Session
 import org.autojs.autodroid.net.AutoDroidApi
 import org.autojs.autodroid.net.CaseStepItem
+import org.autojs.autodroid.util.asObjectOrNull
+import org.autojs.autodroid.util.asStringOrNull
 import org.autojs.autojs6.R
 import retrofit2.Call
 import retrofit2.Callback
@@ -132,20 +134,20 @@ class StepAdapter : BaseAdapter() {
             val args = step.args
             val detail = when (step.action) {
                 "click", "wait_until_exists", "input" -> locatorText(step)
-                "assert_text" -> args?.get("expected_text")?.takeIf { !it.isJsonNull }?.asString
+                "assert_text" -> args?.get("expected_text").asStringOrNull()
                     ?.let { "${assertTextMode(args)}「$it」" } ?: ""
-                "assert_image" -> args?.get("image")?.takeIf { !it.isJsonNull }?.asString
+                "assert_image" -> args?.get("image").asStringOrNull()
                     ?.let { "${assertImageMode(args)} · 模板 $it" } ?: ""
-                "click_image" -> args?.get("image")?.takeIf { !it.isJsonNull }?.asString
+                "click_image" -> args?.get("image").asStringOrNull()
                     ?.let { "模板 $it" } ?: ""
                 "extract_by_ocr" -> buildString {
                     args?.get("region")?.takeIf { !it.isJsonNull }?.let { append("区域 ${it}") }
-                    args?.get("output_var")?.takeIf { !it.isJsonNull }?.asString?.let { append(" → $it") }
+                    args?.get("output_var").asStringOrNull()?.let { append(" → $it") }
                 }
-                "sleep" -> args?.get("seconds")?.takeIf { !it.isJsonNull }?.asString?.let { "${it}s" } ?: ""
-                "swipe" -> args?.get("direction")?.takeIf { !it.isJsonNull }?.asString ?: ""
-                "start_app", "stop_app" -> args?.get("package")?.takeIf { !it.isJsonNull }?.asString
-                    ?: args?.get("app_key")?.takeIf { !it.isJsonNull }?.asString ?: ""
+                "sleep" -> args?.get("seconds").asStringOrNull()?.let { "${it}s" } ?: ""
+                "swipe" -> args?.get("direction").asStringOrNull() ?: ""
+                "start_app", "stop_app" -> args?.get("package").asStringOrNull()
+                    ?: args?.get("app_key").asStringOrNull() ?: ""
                 else -> ""
             }
             return if (detail.isNullOrBlank()) label else "$label · $detail"
@@ -153,25 +155,26 @@ class StepAdapter : BaseAdapter() {
 
         /** 文本断言匹配模式：args.match_mode == "not_contains" → 不包含，否则包含。 */
         private fun assertTextMode(args: com.google.gson.JsonObject?): String {
-            val mode = args?.get("match_mode")?.takeIf { !it.isJsonNull }?.asString
+            val mode = args?.get("match_mode").asStringOrNull()
             return if (mode == "not_contains") "不包含" else "包含"
         }
 
         /** 图像断言匹配模式：args.match_mode == "not_exists" → 不存在，否则存在。 */
         private fun assertImageMode(args: com.google.gson.JsonObject?): String {
-            val mode = args?.get("match_mode")?.takeIf { !it.isJsonNull }?.asString
+            val mode = args?.get("match_mode").asStringOrNull()
             return if (mode == "not_exists") "不存在" else "存在"
         }
 
         private fun locatorText(step: CaseStepItem): String {
-            val override = step.platform_overrides?.getAsJsonObject("android")
-            val selector = override?.get("selector")?.takeIf { !it.isJsonNull }?.asString
-            val by = override?.get("by")?.takeIf { !it.isJsonNull }?.asString
+            // platform_overrides 常见 {"android": null}：getAsJsonObject 会把 JsonNull
+            // 强转 JsonObject 直接崩（用例预览崩溃事故根因），必须按类型取。
+            val override = step.platform_overrides?.get("android").asObjectOrNull()
+            val selector = override?.get("selector").asStringOrNull()
+            val by = override?.get("by").asStringOrNull()
             if (!selector.isNullOrBlank()) {
                 return if (by.isNullOrBlank()) selector else "$by=$selector"
             }
-            val text = step.args?.get("text")?.takeIf { !it.isJsonNull }?.asString
-            return text ?: ""
+            return step.args?.get("text").asStringOrNull() ?: ""
         }
     }
 }
