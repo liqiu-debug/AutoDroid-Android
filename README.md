@@ -1,53 +1,146 @@
 <!--suppress HtmlDeprecatedAttribute, HttpUrlsUsage -->
 
-> ## AutoDroid · Android 客户端（AutoDroid Runner）
->
-> 本仓库是 **[AutoDroid](https://github.com/liqiu-debug/AutoDroid)** 自动化测试平台的 Android 设备端 App：
-> 登录平台后可直接在手机上执行用例 / 场景，步骤结果与报告回传平台，并支持定时任务与执行完成通知。
->
-> - 平台端（FastAPI + Vue 3）：<https://github.com/liqiu-debug/AutoDroid>
-> - 本仓库基于 [AutoJs6 6.7.0](https://github.com/SuperMonster003/AutoJs6) fork 构建，复用其无障碍自动化引擎；
->   **iOS 客户端将另建仓库**，本仓库只服务 Android。
-> - 应用名称 AutoDroid，包名 `com.autodroid.runner`，可与官方 AutoJs6 共存安装。
-> - 预编译包见 [Releases](https://github.com/liqiu-debug/AutoDroid-Android/releases)（提供 arm64-v8a / armeabi-v7a / universal
->   三个 ABI，debug 签名；最新公开包首次打开的平台地址为空，请填写自己的平台地址）。
->
-> ### 功能
->
-> | 模块 | 说明 |
-> |---|---|
-> | 设备接入 | 登录平台并自动注册设备，服务器地址可在设置页修改 |
-> | 用例 / 场景 | 列表、关键字搜索、目录筛选、下拉刷新；行内「运行」直接执行，点击行进只读步骤详情 |
-> | 执行与回显 | 拉取平台下发的脚本包 → 本机引擎执行 → 步骤结果实时回显 → 结果回传平台（HTML 报告与飞书通知由平台侧完成） |
-> | 运行完成通知 | 用例 / 场景跑完发系统通知（全部通过 / 存在失败步骤 + 平台记录号），不依赖运行页存活 |
-> | 报告中心 | 报告列表 + 内嵌 WebView 渲染平台 HTML 报告 |
-> | 定时任务 | 设备侧定时（每天 / 每周 / 间隔 / 单次，iOS 风格滚轮选时间），到点自动执行并回传 |
-> | 设置 | 无障碍状态三态检查（启动时引导开启）、电池优化白名单、引擎控制台、登出 |
->
-> ### 构建
->
-> ```bash
-> JAVA_HOME=/opt/homebrew/opt/openjdk ./gradlew :app:assembleAppDebug
-> ```
->
-> 产物位于 `app/build/outputs/apk/app/debug/runner-v6.7.0-arm64-v8a.apk`。
-> 默认平台地址取 `autodroid.server`（`gradle 属性` 或 `local.properties`，后者不入库），
-> 也可用 `-Pautodroid.server=http://<host>:8000` 指定；App 内登录页与设置页同样可改。
->
-> ### 设备端注意事项
->
-> - 需要开启无障碍服务；部分 ColorOS 机型会出现「已开启但未运行」，到系统设置里关开一次开关并重启设备可恢复。
-> - PC 端 uiautomator2 驱动同一台手机时会压制无障碍服务，设备端执行期间不要同时用平台驱动该设备。
-> - 设备与平台的接入协议（脚本包下发、结果上报）见平台仓库 [docs/APP_RUNNER_API.md](https://github.com/liqiu-debug/AutoDroid/blob/main/docs/APP_RUNNER_API.md)。
->
-> ### 与上游 AutoJs6 的关系与许可
->
-> 本仓库保留 AutoJs6 的完整提交历史与 [MPL-2.0](LICENSE) 许可证，上游代码版权归 AutoJs6 及其前身项目作者所有；
-> `org.autojs.autodroid.*` 下的 AutoDroid 客户端代码、品牌与图标资源为本项目新增。本分支不跟进上游更新。
->
-> ---
->
-> 以下为上游 AutoJs6 的原始说明文档，保留以便查阅引擎能力与 JavaScript API。
+# AutoDroid · Android 客户端（AutoDroid Runner）
+
+本仓库是 **[AutoDroid](https://github.com/liqiu-debug/AutoDroid)** 自动化测试平台的 Android 设备端 App：
+登录平台后可直接在手机上执行用例 / 场景，步骤结果与报告回传平台，并支持设备侧定时任务与执行完成通知。
+手机不需要连接电脑，也不需要平台服务器能访问到手机。
+
+- 平台端（FastAPI + Vue 3）：<https://github.com/liqiu-debug/AutoDroid>；接入协议见平台仓库
+  [docs/APP_RUNNER_API.md](https://github.com/liqiu-debug/AutoDroid/blob/main/docs/APP_RUNNER_API.md)。
+- 同一产品的其它端：[AutoDroid-iOS](https://github.com/liqiu-debug/AutoDroid-iOS)（SwiftUI 客户端，脚本交给同机
+  [AutoDroid-WDA](https://github.com/liqiu-debug/AutoDroid-WDA) 执行）、[AutoDroid-Desktop](https://github.com/liqiu-debug/AutoDroid-Desktop)（桌面客户端）。
+- 本仓库基于 [AutoJs6 6.7.0](https://github.com/SuperMonster003/AutoJs6) fork，复用其无障碍自动化引擎；
+  AutoDroid 自己的代码全部在 `app/src/main/java/org/autojs/autodroid/`（40 个 Kotlin 文件），其余为上游。
+- 应用名称 AutoDroid，包名 `com.autodroid.runner`，可与官方 AutoJs6 共存安装。
+- 预编译包见 [Releases](https://github.com/liqiu-debug/AutoDroid-Android/releases)（arm64-v8a / armeabi-v7a / universal 三个 ABI）。
+  发布包不内置任何平台地址，首次打开请填写自己的平台地址。
+
+## 功能
+
+| 模块 | 说明 |
+|---|---|
+| 设备接入 | 登录平台并自动注册设备（`POST /device-runs/register`），设备中心可见；服务器地址可在登录页与设置页修改 |
+| 用例 / 场景 | 列表、关键字搜索、目录筛选、下拉刷新、加载更多；行内「运行」直接执行，点击行进只读步骤详情 |
+| 执行与回显 | 拉取平台下发的脚本包 → 本机引擎执行 → 步骤结果实时回显 → 结果回传平台（HTML 报告与飞书通知由平台侧完成） |
+| 运行完成通知 | 用例 / 场景跑完发系统通知（全部通过 / 存在失败步骤 + 平台记录号），不依赖运行页存活 |
+| 报告中心 | 报告列表 + 内嵌 WebView 渲染平台 HTML 报告 |
+| 定时任务 | 设备侧定时（每天 / 每周 / 间隔 / 单次，滚轮选时间），到点自动执行并回传；任务归属平台地址 + 账号 |
+| 在线状态 | 登录后向平台发心跳，设备中心显示 App 在线 / 心跳超时 / 已退出登录 |
+| 应用内更新 | 从平台「App 包管理」检查并下载新版本安装 |
+| 设置 | 无障碍状态三态检查（启动时引导开启）、电池优化白名单、引擎控制台、登出 |
+
+## 它怎么工作
+
+```text
+登录（POST /auth/token）→ 注册设备（POST /device-runs/register）
+   │
+   ▼
+用例 / 场景列表（与 Web 端同一套 /cases /scenarios /folders/tree 接口）
+   │  点「运行」
+   ▼
+GET /app-runs/cases/{id}/script  或  GET /app-runs/scenarios/{id}/script
+   │  返回 manifest / runtime.js / main.js / case_files / assets / precheck
+   ▼
+RunBridge.prepareRunDir：写入 filesDir/runs/<runId>/，附 task_config.json（server、token、runId、notify）
+   │
+   ▼
+AutoJs6 引擎执行 main.js（runtime.js 统一驱动每一步并产出 report.json）
+   │
+   ├─ runtime.js 自行 POST /device-runs/report（run_id 幂等；notify 控制飞书）
+   └─ RunNotifier 轮询 report.json → 系统通知；RunActivity 回显步骤
+```
+
+几个约定：
+
+- **脚本包每次都重新拉取**，不缓存旧脚本；预检（`precheck.ok=false`）不通过的包不会被执行。
+- `runId` 由 App 生成（UUID），同一 `runId` 重复上报平台返回原记录、不重复发通知。
+- 本机只保留最近 10 个运行目录（`RunBridge.pruneRuns`）。
+- 同一时刻只允许一次执行：手动运行、定时任务、脚本准备阶段共用 `RunCoordinator` 预约，页面旋转重建不会重跑。
+- 上报失败时结果保留在本机 `report.json`，当前**没有**自动补传队列（iOS 端有），这是已知差异。
+
+## 代码地图
+
+| 包 | 内容 |
+|---|---|
+| `net/` | `AutoDroidApi`（Retrofit 接口与 OkHttp 配置、401 统一清登录）、`ServerAddress`（地址归一化，与桌面端 `server_address.py` 语义一致）、`PageLoader`（分页 + 旧响应隔离）、`AppPresence`（心跳） |
+| `data/` | `Session`：服务器地址、账号、token、默认通知开关（`EncryptedSharedPreferences`） |
+| `run/` | `RunBridge`（脚本包落盘、`task_config.json`、报告解析）、`RunCoordinator`（执行互斥预约）、`RunNotifier`（完成通知） |
+| `schedule/` | `ScheduledRun`（Room 实体与 DAO，数据库版本 2）、`ScheduleManager`（下次执行时间与 `AlarmManager` 精确闹钟）、`ScheduleReceiver` / `ScheduleBootReceiver`（闹钟与开机广播）、`ScheduledRunService`（前台服务，拉脚本并执行） |
+| `update/` | `AppUpdatePolicy`（版本比较）、`AppUpdateFlow`（检查 → 下载 → 安装）、`AppUpdateDownloader`、`UpdateDialog` |
+| `ui/` | 登录、用例 / 场景 / 报告列表与详情、运行页、定时任务列表与编辑、设置，以及 `Ad*` 前缀的通用控件 |
+| `util/JsonSafe` | 对平台 JSON 的防御性取值；**所有新代码取 JSON 字段必须走它**（历史上 Gson 把显式 `null` 当对象导致过崩溃） |
+
+## 定时任务
+
+- 任务存本机 Room 数据库，v2 起带 **平台地址 + 账号** 归属字段；切换账号后另一账号的任务不会被执行。旧版本升级后旧任务会被停用，需要重新保存并启用。
+- 到点由 `AlarmManager` 精确闹钟触发（需要 `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`），`ScheduleReceiver` 把执行交给前台服务 `ScheduledRunService`（`foregroundServiceType="specialUse"`）。
+- 触发时**重新拉取平台最新脚本**，未登录、登录已变化、脚本下发失败或预检不过都不会执行。
+- 设备正忙（有执行在进行）时顺延 30 秒再试；开机后由 `ScheduleBootReceiver` 重新安排；**过期的单次任务不会补跑**。
+- 退出登录（或登录失效）会停用本机全部定时任务：取消闹钟并置为未启用，任务配置保留，重新登录后需手动再启用。
+
+## 构建
+
+| 项 | 值 |
+|---|---|
+| JDK | 17 – 25（推荐 21） |
+| Gradle / AGP | ≥ 8.2 / ≥ 8.4；Android Studio 2023.3+ |
+| compileSdk / targetSdk / minSdk | 36 / 36 / 24 |
+| 渠道（flavor） | `app`（AutoDroid 客户端，主入口 `org.autojs.autodroid.ui.MainActivity`）、`inrt`（上游打包运行时，AutoDroid 不使用） |
+
+```bash
+# Debug 包（macOS Homebrew OpenJDK 示例）
+JAVA_HOME=/opt/homebrew/opt/openjdk ./gradlew :app:assembleAppDebug
+
+# Release 包（GitHub Actions android.yml 跑的就是这个）
+./gradlew :app:assembleAppRelease
+```
+
+产物位于 `app/build/outputs/apk/app/<debug|release>/runner-v*-<abi>.apk`。
+
+- 默认平台地址取 `autodroid.server`（gradle 属性或 `local.properties`，后者不入库），也可
+  `-Pautodroid.server=http://<host>:8000` 指定；不设置则发布包地址为空。
+- 版本号在 `version.properties`：`VERSION_NAME`（当前 1.0.0）与 `VERSION_BUILD`（构建自增，发版时随提交更新）。
+- 首次构建需要联网解析依赖；之后可加 `--offline`。
+
+## 测试
+
+```bash
+JAVA_HOME=/opt/homebrew/opt/openjdk ./gradlew :app:testAppDebugUnitTest
+```
+
+单测位于 `app/src/test/java/org/autojs/autodroid/`，覆盖：地址归一化、定时任务账号归属与过期单次任务、每周调度计算、更新策略版本比较与下载 URL、步骤预览与分页响应的 JSON null 容错、旧搜索响应隔离。
+依赖系统服务的部分（前台服务、闹钟、无障碍）没有单测，靠真机验证。
+
+> 仓库的 GitHub Actions（`.github/workflows/android.yml`）目前只构建 release APK，**不运行单测**，提交前请在本机跑一遍。
+
+## 权限与设备端注意事项
+
+- **无障碍服务**必须开启（引擎依赖）；部分 ColorOS 机型会出现「已开启但未运行」，到系统设置里关开一次开关并重启设备可恢复。
+- **电池优化白名单**：设置页提供一键申请；不加白名单时定时任务与长时间执行可能被系统杀掉。
+- **精确闹钟**（Android 12+ 需用户授权）、**通知**（Android 13+ 运行时申请）、**开机自启**（`RECEIVE_BOOT_COMPLETED`）、**安装未知应用**（应用内更新用）均在首次用到时引导。
+- PC 端 uiautomator2 驱动同一台手机时会压制无障碍服务，**设备端执行期间不要同时用平台直连该设备**。
+- App 允许 `http://` 明文地址（内网部署常见），凭证会以明文经过该连接；对外或经公网访问时请使用 `https://`（例如 Cloudflare Tunnel 域名）。
+
+## 排障
+
+| 现象 | 处理 |
+|---|---|
+| 登录提示「请输入有效的平台地址」 | 地址必须以 `http://` 或 `https://` 开头，不能带用户名密码、`?query`、`#fragment`；末尾 `/` 与 `/api` 会被自动去掉 |
+| 运行后立即失败、提示「脚本包不是预检通过的 Android 格式」 | 平台预检未通过（看平台用例编辑器的预检结果），或平台脚本包格式版本与 App 不匹配（`format_version` 必须为 1） |
+| 执行卡住 / 步骤全部失败 | 先看设置页无障碍是否「已开启且运行中」；再确认没有电脑端同时驱动这台手机 |
+| 定时任务到点没跑 | 依次检查：是否仍登录同一账号、精确闹钟权限、电池优化白名单；一次性任务过期不补跑 |
+| 报告页空白 | 报告 HTML 由 App 带鉴权下载后以平台地址为 base 渲染，确认手机能访问平台地址与 `/api/report-assets/` |
+| 引擎日志 | 设置 → 引擎控制台 |
+
+## 与上游 AutoJs6 的关系与许可
+
+本仓库保留 AutoJs6 的完整提交历史与 [MPL-2.0](LICENSE) 许可证，上游代码版权归 AutoJs6 及其前身项目作者所有；
+`org.autojs.autodroid.*` 下的 AutoDroid 客户端代码、品牌与图标资源为本项目新增。本分支不跟进上游更新。
+
+---
+
+以下为上游 AutoJs6 的原始说明文档，保留以便查阅引擎能力与 JavaScript API。
 
 ******
 
