@@ -52,7 +52,8 @@ object AppPresence : Application.ActivityLifecycleCallbacks {
     private fun payload(state: String) = JSONObject().apply {
         put("platform", "android")
         put("android_id", Settings.Secure.getString(app.contentResolver, Settings.Secure.ANDROID_ID))
-        put("name", Session.deviceName.ifBlank { Build.MODEL })
+        // 仅用户设置的设备名才写 custom_name；Build.MODEL 是机型代号（如 PKZ110），当名字会盖住市场型号
+        if (Session.deviceName.isNotBlank()) put("name", Session.deviceName)
         put("model", Build.MODEL); put("brand", Build.BRAND)
         put("android_version", Build.VERSION.RELEASE); put("os_version", Build.VERSION.RELEASE)
         put("resolution", "${app.resources.displayMetrics.widthPixels}x${app.resources.displayMetrics.heightPixels}")
