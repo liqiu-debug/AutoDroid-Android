@@ -10,6 +10,7 @@ import androidx.core.net.toUri
 import org.autojs.autojs.annotation.RhinoRuntimeFunctionInterface
 import org.autojs.autojs.core.image.ColorDetector
 import org.autojs.autojs.core.image.ImageWrapper
+import org.autojs.autojs.core.image.StrictImageMatcher
 import org.autojs.autojs.core.image.capture.ScreenCapturer
 import org.autojs.autojs.rhino.ArgumentGuards
 import org.autojs.autojs.rhino.extension.AnyExtensions.isJsArray
@@ -64,6 +65,11 @@ import org.opencv.core.CvType
 import org.opencv.features2d.DescriptorMatcher
 import org.opencv.imgproc.Imgproc
 import java.net.URL
+import java.io.File
+import java.security.MessageDigest
+import org.json.JSONObject
+import org.autojs.autojs.util.RhinoUtils.js_json_parse
+import org.autojs.autojs.util.RhinoUtils.js_json_stringify
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
@@ -134,6 +140,9 @@ class Images(scriptRuntime: ScriptRuntime) : Augmentable(scriptRuntime), AsEmitt
         ::findImage.name to AS_GLOBAL,
         ::findImageInRegion.name to AS_GLOBAL,
         ::matchTemplate.name,
+        ::matchImageStrict.name,
+        ::templateSha256.name,
+        ::strictMatcherCapabilities.name,
         ::fromBase64.name,
         ::toBase64.name,
         ::fromBytes.name,
@@ -1120,6 +1129,54 @@ class Images(scriptRuntime: ScriptRuntime) : Augmentable(scriptRuntime), AsEmitt
             } finally {
                 ApiImages.shoot(imageA, imageB)
             }
+        }
+
+        @JvmStatic
+        @RhinoRuntimeFunctionInterface
+        fun matchImageStrict(scriptRuntime: ScriptRuntime, args: Array<out Any?>): Any? = ensureArgumentsLengthInRange(args, 2..3) {
+            val (image, template, options) = it
+            require(image is ImageWrapper && template is ImageWrapper) { "images.matchImageStrict requires two images" }
+            val opts = if (options.isJsNullish()) JSONObject() else JSONObject(coerceString(js_json_stringify(options)))
+            try {
+                initOpenCvIfNeeded()
+                js_json_parse(StrictImageMatcher.match(image.bitmap, template.bitmap, opts).toString())
+            } catch (_: LinkageError) {
+                js_json_parse(JSONObject().put("status", "unsupported").put("reason", "native_dependency_unavailable")
+                    .put("matcher_version", "strict-v1").put("candidates", org.json.JSONArray())
+                    .put("point", JSONObject.NULL).put("quality", JSONObject()).put("timings", JSONObject()).toString())
+            }
+        }
+
+        @JvmStatic
+        @RhinoRuntimeFunctionInterface
+        fun strictMatcherCapabilities(scriptRuntime: ScriptRuntime, args: Array<out Any?>): NativeObject = ensureArgumentsIsEmpty(args) {
+            val acceptance = "534f9d1ea64c25b93692e29cdf85edf298ec69aa92f89bc7444c2a6e9882ddbd"
+            try {
+                initOpenCvIfNeeded()
+                // The legacy loader marks itself initialized before checking
+                // OpenCVLoader's boolean result. Probe a JNI call so incompatible
+                // native binaries cannot advertise a usable strict capability.
+                require(OpencvCore.getBuildInformation().isNotEmpty())
+                mapOf("matcher_version" to "strict-v1", "validated" to true,
+                    "reason" to "shared_acceptance_passed", "acceptance_sha256" to acceptance).toNativeObject()
+            } catch (_: LinkageError) {
+                mapOf("matcher_version" to "strict-v1", "validated" to false,
+                    "reason" to "native_dependency_unavailable", "acceptance_sha256" to acceptance).toNativeObject()
+            } catch (_: Exception) {
+                mapOf("matcher_version" to "strict-v1", "validated" to false,
+                    "reason" to "native_dependency_unavailable", "acceptance_sha256" to acceptance).toNativeObject()
+            }
+        }
+
+        @JvmStatic
+        @RhinoRuntimeFunctionInterface
+        fun templateSha256(scriptRuntime: ScriptRuntime, args: Array<out Any?>): String = ensureArgumentsOnlyOne(args) { path ->
+            val digest = MessageDigest.getInstance("SHA-256")
+            File(coerceString(path)).inputStream().use { stream ->
+                val buffer = ByteArray(8192)
+                while (true) { val count = stream.read(buffer); if (count < 0) break; digest.update(buffer, 0, count) }
+            }
+            digest.digest().joinToString("") { byte -> "%02x".format(byte.toInt() and 255) }
         }
 
         @JvmStatic
