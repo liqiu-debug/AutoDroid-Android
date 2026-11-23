@@ -11,6 +11,7 @@ import org.autojs.autojs.annotation.RhinoRuntimeFunctionInterface
 import org.autojs.autojs.core.image.ColorDetector
 import org.autojs.autojs.core.image.ImageWrapper
 import org.autojs.autojs.core.image.StrictImageMatcher
+import org.autojs.autojs.core.image.AdaptiveImageMatcher
 import org.autojs.autojs.core.image.capture.ScreenCapturer
 import org.autojs.autojs.rhino.ArgumentGuards
 import org.autojs.autojs.rhino.extension.AnyExtensions.isJsArray
@@ -1139,10 +1140,10 @@ class Images(scriptRuntime: ScriptRuntime) : Augmentable(scriptRuntime), AsEmitt
             val opts = if (options.isJsNullish()) JSONObject() else JSONObject(coerceString(js_json_stringify(options)))
             try {
                 initOpenCvIfNeeded()
-                js_json_parse(StrictImageMatcher.match(image.bitmap, template.bitmap, opts).toString())
+                js_json_parse(AdaptiveImageMatcher.match(image.bitmap, template.bitmap, opts).toString())
             } catch (_: LinkageError) {
                 js_json_parse(JSONObject().put("status", "unsupported").put("reason", "native_dependency_unavailable")
-                    .put("matcher_version", "strict-v1").put("candidates", org.json.JSONArray())
+                    .put("matcher_version", opts.optJSONObject("image_match")?.optString("profile", "adaptive-v2") ?: "adaptive-v2").put("candidates", org.json.JSONArray())
                     .put("point", JSONObject.NULL).put("quality", JSONObject()).put("timings", JSONObject()).toString())
             }
         }
@@ -1158,7 +1159,8 @@ class Images(scriptRuntime: ScriptRuntime) : Augmentable(scriptRuntime), AsEmitt
                 // native binaries cannot advertise a usable strict capability.
                 require(OpencvCore.getBuildInformation().isNotEmpty())
                 mapOf("matcher_version" to "strict-v1", "validated" to true,
-                    "reason" to "shared_acceptance_passed", "acceptance_sha256" to acceptance).toNativeObject()
+                    "reason" to "shared_acceptance_passed", "acceptance_sha256" to acceptance,
+                    "profiles" to arrayOf("strict-v1", "adaptive-v2"), "descriptor_versions" to arrayOf(1)).toNativeObject()
             } catch (_: LinkageError) {
                 mapOf("matcher_version" to "strict-v1", "validated" to false,
                     "reason" to "native_dependency_unavailable", "acceptance_sha256" to acceptance).toNativeObject()

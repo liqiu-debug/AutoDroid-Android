@@ -41,6 +41,11 @@ object StrictImageMatcher {
         require(width>=8 && height>=8 && template.size==width*height && candidate.size==template.size)
         return metrics(Raster(width,height,template),Raster(width,height,candidate),ncc)
     }
+    /** The adaptive search shares exactly the strict profile's verifier. */
+    internal fun verifyAdaptiveArgb(width: Int, height: Int, template: IntArray, candidate: IntArray, ncc: Double): Verification {
+        require(width>=8 && height>=8 && template.size==width*height && candidate.size==template.size)
+        return metrics(Raster(width,height,template),Raster(width,height,candidate),ncc, true)
+    }
     private fun array(values: Iterable<*>): JSONArray = JSONArray(values.toList())
     private fun numbers(json: JSONObject, name: String, size: Int): DoubleArray? {
         if (!json.has(name) || json.isNull(name)) return null
@@ -53,7 +58,7 @@ object StrictImageMatcher {
         bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
         return Raster(bitmap.width, bitmap.height, pixels)
     }
-    private fun features(r: Raster): Features {
+    private fun features(r: Raster, adaptive: Boolean = true): Features {
         val w = r.width; val h = r.height; val mag = DoubleArray(w * h)
         var sum = 0.0; var sum2 = 0.0
         for (v in r.gray) { sum += v; sum2 += v * v }
@@ -63,7 +68,12 @@ object StrictImageMatcher {
             val gy = -g[i-w-1] - 2*g[i-w] - g[i-w+1] + g[i+w-1] + 2*g[i+w] + g[i+w+1]
             mag[i] = hypot(gx, gy)
         }
-        val sorted = mag.sortedArray(); val threshold = max(8.0, sorted[((sorted.size - 1) * .9).toInt()] * .25)
+        val sorted = if (adaptive) mag.filter { it >= 8.0 }.sorted() else mag.sortedArray().asList()
+        val at = (sorted.size - 1).coerceAtLeast(0) * .9
+        val percentile = if (sorted.isEmpty()) 0.0 else if (adaptive) {
+            sorted[floor(at).toInt()] + (sorted[ceil(at).toInt()] - sorted[floor(at).toInt()]) * (at-floor(at))
+        } else sorted[at.toInt()]
+        val threshold = max(8.0, percentile * .25)
         val edge = BooleanArray(w*h) { mag[it] >= threshold }; val foreground = BooleanArray(w*h)
         for (y in 0 until h) for (x in 0 until w) if (edge[y*w+x]) {
             for (dy in -1..1) for (dx in -1..1) if (x+dx in 0 until w && y+dy in 0 until h) foreground[(y+dy)*w+x+dx] = true
@@ -80,8 +90,8 @@ object StrictImageMatcher {
         return if (total == 0) 0.0 else found.toDouble()/total
     }
     private fun crop(r: Raster, x: Int, y: Int, w: Int, h: Int): Raster = Raster(w, h, IntArray(w*h) { r.rgb[(y+it/w)*r.width+x+it%w] })
-    private fun metrics(t: Raster, c: Raster, score: Double): Verification {
-        val a = features(t); val b = features(c); val tiles = DoubleArray(16); val counts = IntArray(16)
+    private fun metrics(t: Raster, c: Raster, score: Double, adaptive: Boolean = true): Verification {
+        val a = features(t, adaptive); val b = features(c, adaptive); val tiles = DoubleArray(16); val counts = IntArray(16)
         var grayError = 0.0; var colorError = 0.0; var count = 0; var saturatedT = 0; var saturatedC = 0
         for (i in t.rgb.indices) {
             val tr = t.rgb[i] shr 16 and 255; val tg = t.rgb[i] shr 8 and 255; val tb = t.rgb[i] and 255
