@@ -144,15 +144,16 @@ class RunActivity : AppCompatActivity() {
                         return
                     }
                     try {
+                        val shouldNotify = notifySwitch.isChecked
                         val dir = RunBridge.prepareRunDir(
-                            this@RunActivity, bundle, runId, notifySwitch.isChecked, server, token
+                            this@RunActivity, bundle, runId, shouldNotify, server, token
                         )
                         runDir = dir
                         RunBridge.pruneRuns(this@RunActivity, currentDir = dir)
                         statusText.text = "执行中…（$targetName）"
                         progressBar.visibility = View.VISIBLE
                         RunCoordinator.start(dir, runId) {
-                            if (File(dir, "report.json").isFile) {
+                            if (shouldNotify && File(dir, "report.json").isFile) {
                                 RunNotifier.watchResultAndNotify(applicationContext, dir, kind, targetName)
                             }
                             handler.post {

@@ -39,10 +39,8 @@ class ScheduleReceiver : BroadcastReceiver() {
                 }
                 reservation = executionId
 
-                // 先续排下一次（单次任务执行后停用），再触发本次执行
-                if (run.repeatType == "ONCE") {
-                    dao.update(run.copy(enabled = false, nextRunAt = 0L))
-                } else {
+                // 周期任务续排下一次；ONCE 任务延迟到 ScheduledRunService 成功就绪后再停用
+                if (run.repeatType != "ONCE") {
                     val next = ScheduleManager.computeNextRun(run, System.currentTimeMillis())
                     dao.update(run.copy(nextRunAt = next))
                     ScheduleManager.schedule(context, run, next)

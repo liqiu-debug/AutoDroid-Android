@@ -72,6 +72,7 @@ class ScheduledRunService : Service() {
             val token = Session.token
             if (token.isNullOrBlank() || !run.belongsTo(server, account) || (!run.enabled && run.repeatType != "ONCE")) {
                 Log.w(TAG, "未登录，跳过定时任务 #${run.id}（${run.name}）")
+                RunNotifier.notifyScheduleFailure(this, run.name, "登录状态已失效或任务未启用")
                 return
             }
 
@@ -81,14 +82,26 @@ class ScheduledRunService : Service() {
             } else {
                 api.caseScript(run.targetId)
             }
-            val response = call.execute()
-            if (!response.isSuccessful) {
-                Log.w(TAG, "定时任务 #${run.id} 脚本下发失败：HTTP ${response.code()}")
+            val response = try {
+                call.execute()
+            } catch (e: Exception) {
+                Log.e(TAG, "定时任务 #${run.id} 脚本请求异常", e)
+                RunNotifier.notifyScheduleFailure(this, run.name, "网络请求异常：${e.message ?: e.javaClass.simpleName}")
                 return
             }
-            val bundle = response.body() ?: return
+            if (!response.isSuccessful) {
+                Log.w(TAG, "定时任务 #${run.id} 脚本下发失败：HTTP ${response.code()}")
+                RunNotifier.notifyScheduleFailure(this, run.name, "脚本下发失败（HTTP ${response.code()}）")
+                return
+            }
+            val bundle = response.body() ?: run {
+                Log.w(TAG, "定时任务 #${run.id} 脚本包为空")
+                RunNotifier.notifyScheduleFailure(this, run.name, "服务端返回脚本包为空")
+                return
+            }
             if (Session.token != token || Session.serverUrl != server || Session.username != account) {
                 Log.w(TAG, "登录状态已变化，取消定时任务 #${run.id}")
+                RunNotifier.notifyScheduleFailure(this, run.name, "账号登录状态已变化，任务已取消")
                 return
             }
 
@@ -97,13 +110,19 @@ class ScheduledRunService : Service() {
             val mainJs = File(dir, "main.js")
             if (!mainJs.isFile) {
                 Log.w(TAG, "定时任务 #${run.id}（${run.name}）启动失败：main.js 未就绪")
+                RunNotifier.notifyScheduleFailure(this, run.name, "运行脚本 main.js 未就绪")
                 return
+            }
+            if (run.repeatType == "ONCE") {
+                AppDatabase.get(this).scheduledRuns().update(run.copy(enabled = false, nextRunAt = 0L))
             }
             Log.i(TAG, "定时任务 #${run.id}（${run.name}）开始执行：$runUuid")
             val finished = CountDownLatch(1)
             RunCoordinator.start(dir, runUuid) {
                 try {
-                    if (File(dir, "report.json").isFile) RunNotifier.watchResultAndNotify(this, dir, run.kind, run.name)
+                    if (run.notify && File(dir, "report.json").isFile) {
+                        RunNotifier.watchResultAndNotify(this, dir, run.kind, run.name)
+                    }
                 } finally { finished.countDown() }
             }
             // Keep the foreground service alive until the engine and report upload

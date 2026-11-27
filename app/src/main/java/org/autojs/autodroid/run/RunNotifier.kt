@@ -58,13 +58,19 @@ object RunNotifier {
         }, "RunResultNotifier").start()
     }
 
+    /** 发送定时任务未能触发或失败的系统通知，避免仅记日志造成无声漏跑。 */
+    fun notifyScheduleFailure(context: Context, title: String, reason: String) {
+        val appContext = context.applicationContext
+        val safeTitle = title.ifBlank { "未命名定时任务" }
+        dispatchNotification(
+            context = appContext,
+            notificationId = "$safeTitle:schedule_fail".hashCode(),
+            contentTitle = "定时任务未执行：$safeTitle",
+            body = reason.ifBlank { "未知原因" },
+        )
+    }
+
     private fun notifyResult(context: Context, kind: String, title: String, result: RunBridge.RunResult) {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
-            )
-        }
         val kindLabel = if (kind == "scenario") "场景" else "用例"
         val contentTitle = if (result.success) {
             "${kindLabel}执行完成：全部通过 ✓"
@@ -86,6 +92,26 @@ object RunNotifier {
                 append(" · 未上报平台")
             }
         }
+        dispatchNotification(
+            context = context,
+            notificationId = title.hashCode(),
+            contentTitle = contentTitle,
+            body = body,
+        )
+    }
+
+    private fun dispatchNotification(
+        context: Context,
+        notificationId: Int,
+        contentTitle: String,
+        body: String,
+    ) {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            )
+        }
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
@@ -106,6 +132,6 @@ object RunNotifier {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
-        manager.notify(title.hashCode(), notification)
+        manager.notify(notificationId, notification)
     }
 }
